@@ -44,8 +44,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onNavigateAuth,
 }) => {
   const isDark = theme === 'dark';
-  const tokens = getThemeTokens(theme);
-  const { signOut } = useAuth();
+  const { signOut, user, profile } = useAuth();
 
   const handleSignOut = async () => {
     try {
@@ -61,7 +60,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [hasActiveAnalysis, setHasActiveAnalysis] = useState<boolean>(false);
   const [activeAnalysisCourse, setActiveAnalysisCourse] = useState<string>('Data Structures & Algorithms');
-  
+
   // Interactive Drawers & Modals
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [selectedCourseForWorkspace, setSelectedCourseForWorkspace] = useState<string | null>(null);
@@ -306,7 +305,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   setSelectedCourseForWorkspace(`${item.code} - ${item.courseName}`);
                 }}
                 onViewAll={() => setActiveTab('library')}
-                onFilterClick={() => {}}
+                onFilterClick={() => { }}
               />
             </div>
 

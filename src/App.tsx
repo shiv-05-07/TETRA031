@@ -3,17 +3,11 @@ import { ThemeMode, InstitutionWorkspace } from './types';
 import { useAuth } from './hooks/useAuth';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
-import { TrustSection } from './components/TrustSection';
-import { ProblemSection } from './components/ProblemSection';
-import { LiveAiWorkspace } from './components/LiveAiWorkspace';
-import { FeatureShowcase } from './components/FeatureShowcase';
+import { CapabilityCards } from './components/CapabilityCards';
 import { HowItWorks } from './components/HowItWorks';
-import { InteractiveSandbox } from './components/InteractiveSandbox';
-import { ProductShowcase } from './components/ProductShowcase';
-import { Benefits } from './components/Benefits';
-import { Pricing } from './components/Pricing';
-import { Testimonials } from './components/Testimonials';
-import { FAQ } from './components/FAQ';
+import { PlatformMetrics } from './components/PlatformMetrics';
+import { TechnologyStack } from './components/TechnologyStack';
+import { EducatorValue } from './components/EducatorValue';
 import { FinalCTA } from './components/FinalCTA';
 import { Footer } from './components/Footer';
 import { Modals } from './components/Modals';
@@ -101,11 +95,11 @@ export default function App() {
       {/* 1. Header Navigation */}
       <Navbar
         theme={theme}
-        session={session}
         onToggleTheme={toggleTheme}
         onOpenSignIn={() => handleOpenAuth('signIn')}
         onOpenGetStarted={() => handleOpenAuth('signUp')}
         onOpenDemo={() => setActiveModal('watchDemo')}
+        session={session}
         onOpenDashboard={() => setViewMode('dashboard')}
       />
 
@@ -114,79 +108,33 @@ export default function App() {
         theme={theme}
         onOpenGetStarted={() => handleOpenAuth('signUp')}
         onOpenWatchDemo={() => setActiveModal('watchDemo')}
-        onExportPdf={() => setActiveModal('pdfExport')}
       />
 
-      {/* 3. Trust Section */}
-      <TrustSection theme={theme} />
+      {/* 3. Capability Cards */}
+      <CapabilityCards theme={theme} />
 
-      {/* 4. Problem Section */}
-      <ProblemSection
+      {/* 4. How It Works Pipeline */}
+      <HowItWorks theme={theme} />
+
+      {/* 5. Platform Metrics */}
+      <PlatformMetrics theme={theme} />
+
+      {/* 6. Technology Stack */}
+      <TechnologyStack theme={theme} />
+
+      {/* 7. Educator Value & Dashboard Preview */}
+      <EducatorValue theme={theme} />
+
+      {/* 8. Final Call to Action */}
+      <FinalCTA 
         theme={theme}
         onOpenGetStarted={() => handleOpenAuth('signUp')}
       />
 
-      {/* 5. Live Signature AI Workspace */}
-      <LiveAiWorkspace
-        theme={theme}
-        onExportPdf={() => setActiveModal('pdfExport')}
-      />
-
-      {/* 6. Core Features Showcase */}
-      <FeatureShowcase
-        theme={theme}
-        onOpenGetStarted={() => handleOpenAuth('signUp')}
-        onExportPdf={() => setActiveModal('pdfExport')}
-      />
-
-      {/* 7. How It Works (4-Step Timeline) */}
-      <HowItWorks
-        theme={theme}
-        onOpenGetStarted={() => handleOpenAuth('signUp')}
-      />
-
-      {/* 8. Live Interactive Sandbox */}
-      <InteractiveSandbox
-        theme={theme}
-        onExportPdf={() => setActiveModal('pdfExport')}
-      />
-
-      {/* 9. Enterprise Product Showcase */}
-      <ProductShowcase
-        theme={theme}
-        onOpenGetStarted={() => handleOpenAuth('signUp')}
-      />
-
-      {/* 10. Institutional Benefits */}
-      <Benefits
-        theme={theme}
-        onOpenGetStarted={() => handleOpenAuth('signUp')}
-      />
-
-      {/* 11. Pricing & Tiers */}
-      <Pricing
-        theme={theme}
-        onOpenGetStarted={() => handleOpenAuth('signUp')}
-        onOpenBookDemo={() => setActiveModal('bookDemo')}
-      />
-
-      {/* 12. Deans & Faculty Endorsements */}
-      <Testimonials theme={theme} />
-
-      {/* 13. FAQ Accordion */}
-      <FAQ theme={theme} />
-
-      {/* 14. Final Call to Action */}
-      <FinalCTA
-        theme={theme}
-        onOpenGetStarted={() => handleOpenAuth('signUp')}
-        onOpenBookDemo={() => setActiveModal('bookDemo')}
-      />
-
-      {/* 15. Footer */}
+      {/* 9. Footer */}
       <Footer theme={theme} />
 
-      {/* 16. Interactive Dialog Modals */}
+      {/* 10. Interactive Dialog Modals */}
       <Modals
         theme={theme}
         activeModal={activeModal}

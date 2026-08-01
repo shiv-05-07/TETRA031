@@ -42,7 +42,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
           <div className="flex flex-col">
             <div className="flex items-center gap-1.5">
-              <span className="font-heading font-bold text-xl tracking-tight">Lumini</span>
+              <span className="font-heading font-bold text-xl tracking-tight">CurricuAlign <span className="text-[#10B981]">AI</span></span>
               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-[#10B981]/10 text-[#10B981] border border-[#10B981]/20">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse"></span>
                 v2.5
@@ -61,26 +61,25 @@ export const Navbar: React.FC<NavbarProps> = ({
           }`}>
             Features
           </a>
-          <a href="#sandbox" className={`text-sm font-medium transition-colors flex items-center gap-1.5 ${
+          <a href="#how-it-works" className={`text-sm font-medium transition-colors ${
             isDark ? 'text-[#B3B3B3] hover:text-[#FAFAFA]' : 'text-[#6B7280] hover:text-[#111827]'
           }`}>
-            <span>Interactive Demo</span>
-            <span className="px-1.5 py-0.5 text-[10px] font-semibold rounded-full bg-[#10B981]/10 text-[#10B981]">Live</span>
+            How It Works
           </a>
-          <a href="#solutions" className={`text-sm font-medium transition-colors ${
+          <a href="#technology" className={`text-sm font-medium transition-colors ${
             isDark ? 'text-[#B3B3B3] hover:text-[#FAFAFA]' : 'text-[#6B7280] hover:text-[#111827]'
           }`}>
-            Solutions
+            Technology
           </a>
-          <a href="#pricing" className={`text-sm font-medium transition-colors ${
+          <a href="#about" className={`text-sm font-medium transition-colors ${
             isDark ? 'text-[#B3B3B3] hover:text-[#FAFAFA]' : 'text-[#6B7280] hover:text-[#111827]'
           }`}>
-            Pricing
+            About
           </a>
-          <a href="#faq" className={`text-sm font-medium transition-colors ${
+          <a href="#contact" className={`text-sm font-medium transition-colors ${
             isDark ? 'text-[#B3B3B3] hover:text-[#FAFAFA]' : 'text-[#6B7280] hover:text-[#111827]'
           }`}>
-            FAQ
+            Contact
           </a>
         </nav>
 
@@ -172,41 +171,40 @@ export const Navbar: React.FC<NavbarProps> = ({
               Features
             </a>
             <a
-              href="#sandbox"
-              onClick={() => setMobileMenuOpen(false)}
-              className={`text-base font-medium px-3 py-2 rounded-lg flex items-center justify-between ${
-                isDark ? 'text-[#FAFAFA] hover:bg-[#111111]' : 'text-[#111827] hover:bg-[#F3F4F6]'
-              }`}
-            >
-              <span>Interactive Demo</span>
-              <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-[#10B981]/10 text-[#10B981]">Live</span>
-            </a>
-            <a
-              href="#solutions"
+              href="#how-it-works"
               onClick={() => setMobileMenuOpen(false)}
               className={`text-base font-medium px-3 py-2 rounded-lg ${
                 isDark ? 'text-[#FAFAFA] hover:bg-[#111111]' : 'text-[#111827] hover:bg-[#F3F4F6]'
               }`}
             >
-              Solutions
+              How It Works
             </a>
             <a
-              href="#pricing"
+              href="#technology"
               onClick={() => setMobileMenuOpen(false)}
               className={`text-base font-medium px-3 py-2 rounded-lg ${
                 isDark ? 'text-[#FAFAFA] hover:bg-[#111111]' : 'text-[#111827] hover:bg-[#F3F4F6]'
               }`}
             >
-              Pricing
+              Technology
             </a>
             <a
-              href="#faq"
+              href="#about"
               onClick={() => setMobileMenuOpen(false)}
               className={`text-base font-medium px-3 py-2 rounded-lg ${
                 isDark ? 'text-[#FAFAFA] hover:bg-[#111111]' : 'text-[#111827] hover:bg-[#F3F4F6]'
               }`}
             >
-              FAQ
+              About
+            </a>
+            <a
+              href="#contact"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`text-base font-medium px-3 py-2 rounded-lg ${
+                isDark ? 'text-[#FAFAFA] hover:bg-[#111111]' : 'text-[#111827] hover:bg-[#F3F4F6]'
+              }`}
+            >
+              Contact
             </a>
           </nav>
 
