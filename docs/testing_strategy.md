@@ -23,9 +23,11 @@
 
 ---
 
-# 1. Introduction
+# 1. Lumini
 
-Testing is an essential part of the CurricuAlign AI development lifecycle. This document defines the testing strategy, methodologies, tools, and quality assurance practices adopted to ensure the application's reliability, security, performance, and maintainability.
+## Overview
+
+Testing is an essential part of the Lumini development lifecycle. This document defines the testing strategy, methodologies, tools, and quality assurance practices adopted to ensure the application's reliability, security, performance, and maintainability.
 
 The testing process validates every layer of the system, including the frontend, backend, AI pipeline, databases, authentication, and integrations. By combining automated and manual testing approaches, the project aims to detect defects early, improve development confidence, and deliver a stable application.
 

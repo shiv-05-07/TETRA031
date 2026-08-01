@@ -35,7 +35,7 @@ export const FinalCTA: React.FC<FinalCTAProps> = ({
         <p className={`text-lg sm:text-xl max-w-2xl mx-auto leading-relaxed ${
           isDark ? 'text-[#B3B3B3]' : 'text-[#6B7280]'
         }`}>
-          Join leading universities using CurricuAlign AI to bridge industry skill gaps and construct skill knowledge graphs.
+          Join leading universities using Lumini to bridge industry skill gaps and construct skill knowledge graphs.
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
@@ -48,7 +48,7 @@ export const FinalCTA: React.FC<FinalCTAProps> = ({
           </button>
 
           <a
-            href="mailto:sales@curricualign.ai"
+            href="mailto:sales@lumini.ai"
             className={`inline-flex items-center justify-center gap-2.5 px-8 py-4 text-base font-medium rounded-[14px] border transition-all duration-200 ${
               isDark
                 ? 'bg-[#111111] border-[#262626] text-[#FAFAFA] hover:bg-[#171717] hover:border-[#10B981]/40'
