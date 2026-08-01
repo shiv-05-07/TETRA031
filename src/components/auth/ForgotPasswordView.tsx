@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { Mail, ArrowLeft, KeyRound, Loader2, CheckCircle2, Sparkles } from 'lucide-react';
 import { ThemeMode } from '../../types';
+import { supabase } from '../../lib/supabase';
 
 interface ForgotPasswordViewProps {
   theme: ThemeMode;
@@ -20,7 +21,7 @@ export const ForgotPasswordView: React.FC<ForgotPasswordViewProps> = ({
   const [isSent, setIsSent] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
 
@@ -30,10 +31,17 @@ export const ForgotPasswordView: React.FC<ForgotPasswordViewProps> = ({
     }
 
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+
+    setIsLoading(false);
+    
+    if (error) {
+      setErrorMsg(error.message);
+    } else {
       setIsSent(true);
-    }, 1000);
+    }
   };
 
   return (
