@@ -31,7 +31,7 @@ export const FAQ: React.FC<FAQProps> = ({ theme }) => {
             Frequently Asked Questions
           </h2>
           <p className={`text-base leading-relaxed ${isDark ? 'text-[#B3B3B3]' : 'text-[#6B7280]'}`}>
-            Everything you need to know about CirrculAI's AI engine, security standards, and accreditation mapping.
+            Everything you need to know about Lumini's AI engine, security standards, and accreditation mapping.
           </p>
         </div>
 

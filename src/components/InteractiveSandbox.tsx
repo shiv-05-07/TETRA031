@@ -105,7 +105,7 @@ export const InteractiveSandbox: React.FC<InteractiveSandboxProps> = ({ theme, o
             <span>Interactive AI Sandbox</span>
           </div>
           <h2 className="font-heading font-bold text-3xl sm:text-4xl lg:text-5xl tracking-tight">
-            Test the CirrculAI Generation Engine
+            Test the Lumini Generation Engine
           </h2>
           <p className={`text-base sm:text-lg leading-relaxed ${isDark ? 'text-[#B3B3B3]' : 'text-[#6B7280]'}`}>
             Select a discipline or enter custom parameters to experience real-time Bloom's Taxonomy mapping and curriculum structuring.

@@ -30,7 +30,7 @@ async function startServer() {
 
   // Health check endpoint
   app.get("/api/health", (req, res) => {
-    res.json({ status: "ok", service: "CirrculAI Backend", timestamp: new Date().toISOString() });
+    res.json({ status: "ok", service: "Lumini Backend", timestamp: new Date().toISOString() });
   });
 
   // AI Curriculum Generator Endpoint
@@ -104,7 +104,7 @@ async function startServer() {
         });
       }
 
-      const prompt = `You are CirrculAI, an enterprise curriculum intelligence AI.
+      const prompt = `You are Lumini, an enterprise curriculum intelligence AI.
 Generate an institutional-grade, Bloom's Taxonomy-aligned course curriculum for:
 Subject: ${subject || "Artificial Intelligence & Distributed Systems"}
 Level: ${level || "Undergraduate / Post-Graduate"}
@@ -199,7 +199,7 @@ Respond in structured JSON format with exact keys:
         });
       }
 
-      const prompt = `You are CirrculAI Audit Engine. Analyze this syllabus snippet:
+      const prompt = `You are Lumini Audit Engine. Analyze this syllabus snippet:
 "${syllabusText.slice(0, 3000)}"
 
 Return structured JSON audit results:
@@ -251,7 +251,7 @@ Return structured JSON audit results:
   }
 
   app.listen(PORT, "0.0.0.0", () => {
-    console.log(`CirrculAI Server running on http://0.0.0.0:${PORT}`);
+    console.log(`Lumini Server running on http://0.0.0.0:${PORT}`);
   });
 }
 

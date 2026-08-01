@@ -198,7 +198,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                 <GraduationCap className="w-4 h-4 text-[#10B981]" />
               </div>
             </div>
-            <span className="font-heading font-bold text-lg tracking-tight">Cirrcul<span className="text-[#10B981]">AI</span></span>
+            <span className="font-heading font-bold text-lg tracking-tight">Lumini</span>
           </a>
         </div>
 
@@ -314,7 +314,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                   className="space-y-4"
                 >
                   <div className="space-y-1 mb-2">
-                    <h2 className="font-heading font-bold text-xl sm:text-2xl tracking-tight">Sign In to CirrculAI</h2>
+                    <h2 className="font-heading font-bold text-xl sm:text-2xl tracking-tight">Sign In to Lumini</h2>
                     <p className={`text-xs ${isDark ? 'text-[#888888]' : 'text-[#6B7280]'}`}>
                       Access university curriculum intelligence and ABET accreditation workspace
                     </p>
@@ -501,7 +501,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                   <div className="space-y-1 mb-2">
                     <h2 className="font-heading font-bold text-xl sm:text-2xl tracking-tight">Register Institution</h2>
                     <p className={`text-xs ${isDark ? 'text-[#888888]' : 'text-[#6B7280]'}`}>
-                      Setup CirrculAI for your university, college, or accreditation body
+                      Setup Lumini for your university, college, or accreditation body
                     </p>
                   </div>
 
@@ -774,7 +774,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                 <span>•</span>
                 <span>ABET v2025</span>
               </div>
-              <div>© 2026 CirrculAI Inc. All rights reserved.</div>
+              <div>© 2026 Lumini Inc. All rights reserved.</div>
             </div>
 
           </div>

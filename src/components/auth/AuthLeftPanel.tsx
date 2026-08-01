@@ -131,7 +131,7 @@ export const AuthLeftPanel: React.FC<AuthLeftPanelProps> = ({ theme }) => {
         {/* Hero Headings */}
         <div className="space-y-3">
           <h1 className="font-heading font-bold text-3xl sm:text-4xl lg:text-4xl xl:text-5xl tracking-tight leading-[1.12]">
-            Welcome to <span className="text-[#10B981]">CirrculAI</span>
+            Welcome to <span className="text-[#10B981]">Lumini</span>
           </h1>
           <p className={`text-sm sm:text-base leading-relaxed max-w-xl ${isDark ? 'text-[#A3A3A3]' : 'text-[#4B5563]'}`}>
             AI-powered Curriculum Intelligence & Modernization Platform
@@ -149,7 +149,7 @@ export const AuthLeftPanel: React.FC<AuthLeftPanelProps> = ({ theme }) => {
               <div className="w-3 h-3 rounded-full bg-amber-500/80" />
               <div className="w-3 h-3 rounded-full bg-emerald-500/80" />
               <span className={`text-[11px] font-mono ml-2 font-medium ${isDark ? 'text-[#737373]' : 'text-[#9CA3AF]'}`}>
-                cirrculai://curriculum-engine.v3
+                lumini://curriculum-engine.v3
               </span>
             </div>
             <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#10B981]/15 text-[#10B981] font-semibold border border-[#10B981]/30">
@@ -250,7 +250,7 @@ export const AuthLeftPanel: React.FC<AuthLeftPanelProps> = ({ theme }) => {
         }`}>
           <Quote className="w-5 h-5 text-[#10B981]/30 absolute top-3 right-3" />
           <p className={`text-xs italic leading-relaxed ${isDark ? 'text-[#B3B3B3]' : 'text-[#4B5563]'}`}>
-            "CirrculAI reduced our computer science accreditation review prep from 4 months to under 2 hours. It is indispensable for modern deans and faculty."
+            "Lumini reduced our computer science accreditation review prep from 4 months to under 2 hours. It is indispensable for modern deans and faculty."
           </p>
           <div className="flex items-center gap-3 mt-3">
             <div className="w-8 h-8 rounded-full bg-[#10B981]/20 border border-[#10B981]/40 flex items-center justify-center font-bold text-xs text-[#10B981]">

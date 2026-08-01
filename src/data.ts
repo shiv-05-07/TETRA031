@@ -200,7 +200,7 @@ export const PRICING_PLANS: PricingPlan[] = [
 export const TESTIMONIALS_LIST: Testimonial[] = [
   {
     id: "t1",
-    quote: "CirrculAI reduced our annual curriculum modernization review from a 4-month committee marathon to under 30 minutes. The industry skill gap detection pinpointed our missing vector database modules immediately.",
+    quote: "Lumini reduced our annual curriculum modernization review from a 4-month committee marathon to under 30 minutes. The industry skill gap detection pinpointed our missing vector database modules immediately.",
     author: "Dr. Aris Thorne",
     role: "Dean of Engineering & Computer Science",
     institution: "Stanford University",
@@ -208,7 +208,7 @@ export const TESTIMONIALS_LIST: Testimonial[] = [
   },
   {
     id: "t2",
-    quote: "As Academic Council Chair, ensuring our software engineering syllabus keeps pace with industry standard frameworks like MCP and Kubernetes was challenging. CirrculAI provides the exact data backing we need for accreditation.",
+    quote: "As Academic Council Chair, ensuring our software engineering syllabus keeps pace with industry standard frameworks like MCP and Kubernetes was challenging. Lumini provides the exact data backing we need for accreditation.",
     author: "Prof. Elena Rostova",
     role: "Curriculum Committee Chair",
     institution: "Imperial College London",
@@ -216,7 +216,7 @@ export const TESTIMONIALS_LIST: Testimonial[] = [
   },
   {
     id: "t3",
-    quote: "Mapping Course Outcomes to ABET and NBA requirements used to take hundreds of faculty hours. CirrculAI auto-maps our outcomes to live industry skill graphs and generates audit-ready compliance matrices.",
+    quote: "Mapping Course Outcomes to ABET and NBA requirements used to take hundreds of faculty hours. Lumini auto-maps our outcomes to live industry skill graphs and generates audit-ready compliance matrices.",
     author: "Dr. Marcus Vance",
     role: "Head of Department, Data Science",
     institution: "ETH Zürich",
@@ -236,31 +236,31 @@ export const FAQ_LIST: FAQItem[] = [
   {
     id: "faq-1",
     category: "General",
-    question: "What is CirrculAI and how does it help universities?",
-    answer: "CirrculAI is an enterprise AI-powered curriculum intelligence platform. It analyzes course syllabi, maps learning outcomes against Bloom's Revised Taxonomy, identifies industry skill gaps against live market data, and generates lesson plans, question papers, rubrics, and accreditation reports in minutes."
+    question: "What is Lumini and how does it help universities?",
+    answer: "Lumini is an enterprise AI-powered curriculum intelligence platform. It analyzes course syllabi, maps learning outcomes against Bloom's Revised Taxonomy, identifies industry skill gaps against live market data, and generates lesson plans, question papers, rubrics, and accreditation reports in minutes."
   },
   {
     id: "faq-2",
     category: "Accreditation",
-    question: "Does CirrculAI support accreditation standards like ABET, IEEE, or AACSB?",
-    answer: "Yes. CirrculAI includes built-in templates for ABET, IEEE, ACM, and AACSB frameworks. It automatically maps Course Outcomes (COs) to Program Outcomes (POs) and generates exportable matrices formatted for accreditation review boards."
+    question: "Does Lumini support accreditation standards like ABET, IEEE, or AACSB?",
+    answer: "Yes. Lumini includes built-in templates for ABET, IEEE, ACM, and AACSB frameworks. It automatically maps Course Outcomes (COs) to Program Outcomes (POs) and generates exportable matrices formatted for accreditation review boards."
   },
   {
     id: "faq-3",
     category: "Security",
     question: "Is university data kept confidential and secure?",
-    answer: "Absolutely. CirrculAI adheres to strict enterprise data protection policies (FERPA compliant, SOC2 Type II standard architecture). Your uploaded syllabi, question banks, and internal curriculum documents are never used to train public AI models."
+    answer: "Absolutely. Lumini adheres to strict enterprise data protection policies (FERPA compliant, SOC2 Type II standard architecture). Your uploaded syllabi, question banks, and internal curriculum documents are never used to train public AI models."
   },
   {
     id: "faq-4",
     category: "Integrations",
-    question: "Can CirrculAI export to LMS platforms like Canvas, Moodle, or Blackboard?",
+    question: "Can Lumini export to LMS platforms like Canvas, Moodle, or Blackboard?",
     answer: "Yes. You can export generated lesson plans, question banks, and rubrics directly in PDF, Word, LaTeX, JSON, or QTI formats compatible with Canvas, Moodle, Blackboard, and Google Classroom."
   },
   {
     id: "faq-5",
     category: "AI Technology",
-    question: "Which AI models power CirrculAI's reasoning engine?",
-    answer: "CirrculAI utilizes Google DeepMind's Gemini 3.6 Flash model combined with custom Neo4j Skill Ontology Knowledge Graphs and ChromaDB vector search to ensure grounded, hallucination-free educational recommendations."
+    question: "Which AI models power Lumini's reasoning engine?",
+    answer: "Lumini utilizes Google DeepMind's Gemini 3.6 Flash model combined with custom Neo4j Skill Ontology Knowledge Graphs and ChromaDB vector search to ensure grounded, hallucination-free educational recommendations."
   }
 ];

@@ -1164,7 +1164,7 @@ export const KnowledgeGraphExplorerPage: React.FC<KnowledgeGraphExplorerPageProp
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ nodes, edges }, null, 2));
       const downloadAnchor = document.createElement('a');
       downloadAnchor.setAttribute("href", dataStr);
-      downloadAnchor.setAttribute("download", "cirrculai_neo4j_knowledge_graph.json");
+      downloadAnchor.setAttribute("download", "lumini_neo4j_knowledge_graph.json");
       document.body.appendChild(downloadAnchor);
       downloadAnchor.click();
       downloadAnchor.remove();
@@ -1836,7 +1836,7 @@ export const KnowledgeGraphExplorerPage: React.FC<KnowledgeGraphExplorerPageProp
             </div>
 
             <div className="flex items-center justify-between text-[11px] text-[#A3A3A3]">
-              <span>Neo4j Instance: Bolt://neo4j.cirrculai.internal:7687 (Connected)</span>
+              <span>Neo4j Instance: Bolt://neo4j.lumini.internal:7687 (Connected)</span>
               <span className="text-[#10B981] font-bold">Query Execution Time: 4.2ms</span>
             </div>
           </motion.div>
@@ -1990,7 +1990,7 @@ export const KnowledgeGraphExplorerPage: React.FC<KnowledgeGraphExplorerPageProp
           <div>
             <h3 className="font-heading font-bold text-base">Executive Neo4j Ontological Summary</h3>
             <p className={`text-xs ${isDark ? 'text-[#A3A3A3]' : 'text-[#6B7280]'}`}>
-              Synthesized by CirrculAI Graph Engine for Academic Deans & Committee Chairs
+              Synthesized by Lumini Graph Engine for Academic Deans & Committee Chairs
             </p>
           </div>
         </div>

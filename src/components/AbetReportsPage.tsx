@@ -1136,7 +1136,7 @@ export const AbetReportsPage: React.FC<AbetReportsPageProps> = ({
                 isDark ? 'bg-[#0E0E0E] border-[#262626] text-[#D4D4D4]' : 'bg-[#F9FAFB] border-[#E5E7EB] text-[#374151]'
               }`}>
                 <div className="flex items-center justify-between text-[11px] pb-3 border-b border-[#262626]/40">
-                  <span className="text-[#10B981] font-bold">CIRRCULAI EXECUTIVE DOCUMENT SPECIFICATION</span>
+                  <span className="text-[#10B981] font-bold">LUMINI EXECUTIVE DOCUMENT SPECIFICATION</span>
                   <span>STANFORD ENGINEERING • CS-8042</span>
                 </div>
 
@@ -1242,7 +1242,7 @@ export const AbetReportsPage: React.FC<AbetReportsPageProps> = ({
                     <input
                       type="text"
                       readOnly
-                      value="https://cirrcul.ai/reports/abet-2026-stanford-cs8042"
+                      value="https://lumini.ai/reports/abet-2026-stanford-cs8042"
                       className={`flex-1 p-2.5 rounded-xl border text-xs font-mono focus:outline-none ${
                         isDark ? 'bg-[#171717] border-[#262626] text-[#10B981]' : 'bg-[#F9FAFB] border-[#E5E7EB] text-[#059669]'
                       }`}

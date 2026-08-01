@@ -255,7 +255,7 @@ export const WorkspaceSetupWizard: React.FC<WorkspaceSetupWizardProps> = ({
             </div>
             <div>
               <div className="font-heading font-bold text-sm tracking-tight flex items-center gap-2">
-                <span>Cirrcul<span className="text-[#10B981]">AI</span></span>
+                <span>Lumini</span>
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#10B981]/10 text-[#10B981] font-mono font-bold">
                   Enterprise Onboarding
                 </span>
@@ -1041,7 +1041,7 @@ export const WorkspaceSetupWizard: React.FC<WorkspaceSetupWizardProps> = ({
                         Workspace Domain
                       </span>
                       <span className="font-mono font-bold text-[#10B981]">
-                        {shortName.toLowerCase().replace(/\s+/g, '')}.cirrculai.org
+                        {shortName.toLowerCase().replace(/\s+/g, '')}.lumini.org
                       </span>
                     </div>
 

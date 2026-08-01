@@ -101,7 +101,7 @@ export const LiveAiWorkspace: React.FC<LiveAiWorkspaceProps> = ({ theme, onExpor
               <div className="w-3 h-3 rounded-full bg-[#FFBD2E]" />
               <div className="w-3 h-3 rounded-full bg-[#27C93F]" />
               <span className={`text-xs font-mono ml-2 font-medium ${isDark ? 'text-[#737373]' : 'text-[#6B7280]'}`}>
-                cirrculai-workspace.university.edu — Gemini 3.6 Flash Active
+                lumini-workspace.university.edu — Gemini 3.6 Flash Active
               </span>
             </div>
 
