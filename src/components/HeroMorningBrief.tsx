@@ -71,7 +71,7 @@ export const HeroMorningBrief: React.FC<HeroMorningBriefProps> = ({
             </div>
 
             <p className={`text-xs sm:text-sm leading-relaxed ${isDark ? 'text-[#B3B3B3]' : 'text-[#4B5563]'}`}>
-              Yesterday, CirrculAI continuously monitored and analyzed <span className="font-bold text-[#10B981]">18 departmental curricula</span> against 120,000+ live enterprise hiring specs across Silicon Valley & Europe.
+              Yesterday, Lumini continuously monitored and analyzed <span className="font-bold text-[#10B981]">18 departmental curricula</span> against 120,000+ live enterprise hiring specs across Silicon Valley & Europe.
             </p>
           </div>
 

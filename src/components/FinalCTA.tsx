@@ -37,7 +37,7 @@ export const FinalCTA: React.FC<FinalCTAProps> = ({
         <p className={`text-lg sm:text-xl max-w-2xl mx-auto leading-relaxed ${
           isDark ? 'text-[#B3B3B3]' : 'text-[#6B7280]'
         }`}>
-          Join leading universities using CirrculAI to bridge industry skill gaps, construct skill knowledge graphs, and streamline ABET/NBA accreditation audits.
+          Join leading universities using Lumini to bridge industry skill gaps, construct skill knowledge graphs, and streamline ABET/NBA accreditation audits.
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">

@@ -62,7 +62,7 @@ export const HowItWorks: React.FC<HowItWorksProps> = ({ theme, onOpenGetStarted 
             6-Step Intelligence Workflow
           </p>
           <h2 className="font-heading font-bold text-3xl sm:text-4xl lg:text-5xl tracking-tight">
-            How CirrculAI Operates
+            How Lumini Operates
           </h2>
           <p className={`text-base leading-relaxed ${isDark ? 'text-[#B3B3B3]' : 'text-[#6B7280]'}`}>
             A systematic intelligence workflow designed to eliminate curriculum obsolescence and streamline academic reviews.

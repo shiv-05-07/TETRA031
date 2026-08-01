@@ -212,7 +212,7 @@ export const EmailVerificationView: React.FC<EmailVerificationViewProps> = ({
           <Check className="w-8 h-8 mx-auto" />
           <div className="font-heading font-bold text-base">Institutional Email Verified!</div>
           <p className="text-xs text-current/80">
-            Welcome to CirrculAI. Redirecting to your workspace...
+            Welcome to Lumini. Redirecting to your workspace...
           </p>
         </motion.div>
       )}

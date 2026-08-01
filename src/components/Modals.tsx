@@ -79,7 +79,7 @@ export const Modals: React.FC<ModalsProps> = ({
                   <span>3-Minute Interactive Walkthrough</span>
                 </div>
                 <h3 className="font-heading font-bold text-2xl sm:text-3xl">
-                  CirrculAI Platform Demonstration
+                  Lumini Platform Demonstration
                 </h3>
                 <p className={`text-xs sm:text-sm ${isDark ? 'text-[#B3B3B3]' : 'text-[#6B7280]'}`}>
                   Discover how professors and department heads generate accredited course syllabi, Bloom's Taxonomy maps, and question papers.
@@ -117,7 +117,7 @@ export const Modals: React.FC<ModalsProps> = ({
                 <div className="flex items-center gap-2">
                   <GraduationCap className="w-6 h-6 text-[#10B981]" />
                   <span className="font-heading font-bold text-2xl">
-                    {activeModal === 'signIn' ? 'Welcome Back to CirrculAI' : 'Create Enterprise Academic Account'}
+                    {activeModal === 'signIn' ? 'Welcome Back to Lumini' : 'Create Enterprise Academic Account'}
                   </span>
                 </div>
                 <p className={`text-xs sm:text-sm ${isDark ? 'text-[#B3B3B3]' : 'text-[#6B7280]'}`}>
@@ -272,7 +272,7 @@ export const Modals: React.FC<ModalsProps> = ({
                     <p className="text-xs font-mono text-[#10B981] mt-0.5">Course Code: {curriculumData.code} · {curriculumData.level}</p>
                   </div>
                   <div className="text-right text-[10px] font-mono opacity-70">
-                    <span>CirrculAI Verified Audit</span>
+                    <span>Lumini Verified Audit</span>
                     <br />
                     <span>ABETS Criterion 3</span>
                   </div>

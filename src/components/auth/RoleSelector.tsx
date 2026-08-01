@@ -91,7 +91,7 @@ export const RoleSelector: React.FC<RoleSelectorProps> = ({
         </div>
         <h2 className="font-heading font-bold text-2xl sm:text-3xl tracking-tight">Select Academic Role</h2>
         <p className={`text-xs sm:text-sm ${isDark ? 'text-[#888888]' : 'text-[#6B7280]'}`}>
-          We will customize your CirrculAI workspace dashboard according to your primary academic role
+          We will customize your Lumini workspace dashboard according to your primary academic role
         </p>
       </div>
 

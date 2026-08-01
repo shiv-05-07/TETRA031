@@ -93,7 +93,7 @@ export const Hero: React.FC<HeroProps> = ({
                 isDark ? 'text-[#B3B3B3]' : 'text-[#6B7280]'
               }`}
             >
-              CirrculAI continuously compares university syllabi against real industry skill requirements, job market trends and emerging technologies to identify skill gaps and generate AI-powered curriculum improvements.
+              Lumini continuously compares university syllabi against real industry skill requirements, job market trends and emerging technologies to identify skill gaps and generate AI-powered curriculum improvements.
             </motion.p>
 
             {/* CTA Buttons */}
@@ -175,7 +175,7 @@ export const Hero: React.FC<HeroProps> = ({
                   <div className="w-3 h-3 rounded-full bg-[#F59E0B]/80" />
                   <div className="w-3 h-3 rounded-full bg-[#10B981]/80" />
                   <span className={`ml-3 text-xs font-mono font-medium ${isDark ? 'text-[#737373]' : 'text-[#6B7280]'}`}>
-                    CirrculAI Workstation — CS-8042 Advanced ML
+                    Lumini Workstation — CS-8042 Advanced ML
                   </span>
                 </div>
 

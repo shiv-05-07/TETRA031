@@ -132,7 +132,7 @@ export const Benefits: React.FC<BenefitsProps> = ({ theme, onOpenGetStarted }) =
                 Institutional Value
               </p>
               <h2 className="font-heading font-bold text-3xl sm:text-4xl lg:text-5xl tracking-tight">
-                Why Universities Upgrade to CirrculAI
+                Why Universities Upgrade to Lumini
               </h2>
               <p className={`text-base leading-relaxed ${isDark ? 'text-[#B3B3B3]' : 'text-[#6B7280]'}`}>
                 Eliminate administrative friction while raising the bar for educational quality and accreditation readiness.

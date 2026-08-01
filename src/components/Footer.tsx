@@ -28,7 +28,7 @@ export const Footer: React.FC<FooterProps> = ({ theme }) => {
                 </div>
               </div>
               <span className="font-heading font-bold text-xl tracking-tight">
-                Cirrcul<span className="text-[#10B981]">AI</span>
+                Lumini
               </span>
             </a>
 
@@ -112,7 +112,7 @@ export const Footer: React.FC<FooterProps> = ({ theme }) => {
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-[#262626]/40 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
           <p className={isDark ? 'text-[#737373]' : 'text-[#6B7280]'}>
-            © {new Date().getFullYear()} CirrculAI Inc. All rights reserved.
+            © {new Date().getFullYear()} Lumini Inc. All rights reserved.
           </p>
 
           <div className="flex items-center gap-6">

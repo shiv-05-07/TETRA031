@@ -50,7 +50,7 @@ export const ProblemSection: React.FC<ProblemSectionProps> = ({ theme, onOpenGet
             Curriculum Design Shouldn't Take Weeks.
           </h2>
           <p className={`text-base sm:text-lg leading-relaxed ${isDark ? 'text-[#B3B3B3]' : 'text-[#6B7280]'}`}>
-            Technology evolves every 6 months, but academic course syllabi often remain frozen for years. Here is how CirrculAI bridges the gap between academia and industry.
+            Technology evolves every 6 months, but academic course syllabi often remain frozen for years. Here is how Lumini bridges the gap between academia and industry.
           </p>
         </div>
 
@@ -86,14 +86,14 @@ export const ProblemSection: React.FC<ProblemSectionProps> = ({ theme, onOpenGet
                 </div>
               </div>
 
-              {/* CirrculAI Solution Box */}
+              {/* Lumini Solution Box */}
               <div className={`p-4 rounded-xl border flex items-start gap-3 ${
                 isDark ? 'bg-[#10B981]/10 border-[#10B981]/30' : 'bg-[#ECFDF5] border-[#6EE7B7]'
               }`}>
                 <CheckCircle2 className="w-5 h-5 text-[#10B981] flex-shrink-0 mt-0.5" />
                 <div>
                   <span className="text-xs font-bold uppercase tracking-wider text-[#10B981] block font-mono">
-                    The CirrculAI Engine
+                    The Lumini Engine
                   </span>
                   <p className={`text-xs sm:text-sm mt-1 leading-relaxed ${isDark ? 'text-[#FAFAFA]' : 'text-[#065F46]'}`}>
                     {item.solution}

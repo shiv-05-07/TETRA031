@@ -214,7 +214,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             {!sidebarCollapsed && (
               <div className="flex flex-col">
                 <span className="font-heading font-bold text-lg tracking-tight leading-none">
-                  Cirrcul<span className="text-[#10B981]">AI</span>
+                  Lumini
                 </span>
                 <span className="text-[10px] font-mono text-[#10B981] mt-0.5 font-semibold">
                   MISSION CONTROL
