@@ -10,7 +10,8 @@ import {
   ChevronLeft,
   ChevronRight,
   GraduationCap,
-  FileText
+  FileText,
+  History
 } from 'lucide-react';
 import { ThemeMode } from '../../types';
 import { getThemeTokens } from '../../theme/tokens';
@@ -42,6 +43,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const mainNavItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'upload', label: 'Upload Curriculum', icon: Upload, isUpload: true },
+    { id: 'past_analysis', label: 'Past Analysis', icon: History },
     { id: 'graph', label: 'Knowledge Graph', icon: Network },
     { id: 'recommendations', label: 'AI Recommendations', icon: Sparkles },
   ];

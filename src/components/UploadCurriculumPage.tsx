@@ -20,12 +20,15 @@ import { getThemeTokens } from '../theme/tokens';
 import { Card } from './dashboard/Card';
 import { AnalyzingCurriculumPage } from './AnalyzingCurriculumPage';
 import { AnalysisResultsPage } from './AnalysisResultsPage';
+import { PastAnalysisRecord } from './PastAnalysisPage';
 
 interface UploadCurriculumPageProps {
   theme: ThemeMode;
   onNavigateGraph: () => void;
   onNavigateRecommendations: () => void;
   onNavigateDashboard: () => void;
+  onNavigatePastAnalysis?: () => void;
+  onAnalysisComplete?: (record: PastAnalysisRecord) => void;
 }
 
 interface UploadedFile {
@@ -41,6 +44,8 @@ export const UploadCurriculumPage: React.FC<UploadCurriculumPageProps> = ({
   onNavigateGraph,
   onNavigateRecommendations,
   onNavigateDashboard,
+  onNavigatePastAnalysis,
+  onAnalysisComplete,
 }) => {
   const tokens = getThemeTokens(theme);
 
@@ -53,6 +58,9 @@ export const UploadCurriculumPage: React.FC<UploadCurriculumPageProps> = ({
   const [semester, setSemester] = useState('IV');
   const [academicYear, setAcademicYear] = useState('2024 - 2025');
   const [curriculumVersion, setCurriculumVersion] = useState('1.0');
+
+  // Active completed record state
+  const [completedRecord, setCompletedRecord] = useState<PastAnalysisRecord | undefined>();
 
   // File Upload State
   const [files, setFiles] = useState<UploadedFile[]>([
@@ -104,15 +112,56 @@ export const UploadCurriculumPage: React.FC<UploadCurriculumPageProps> = ({
     setWorkflowState('processing');
   };
 
+  const handlePipelineComplete = () => {
+    const newRecord: PastAnalysisRecord = {
+      id: `analysis_${Date.now()}`,
+      courseCode: 'CS-2020',
+      courseTitle: courseName || 'Data Structures and Algorithms',
+      department: department || 'Computer Science and Engineering',
+      semester: semester || 'IV',
+      academicYear: academicYear || '2024 - 2025',
+      curriculumVersion: curriculumVersion || '1.0',
+      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      alignmentScore: 88,
+      coveragePercentage: 56.8,
+      totalSkills: 162,
+      coveredSkills: 92,
+      missingSkillsCount: 48,
+      outdatedSkillsCount: 22,
+      status: 'Completed',
+      missingSkills: [
+        'Docker',
+        'Kubernetes',
+        'LangChain',
+        'GraphRAG',
+        'Neo4j',
+        'Prompt Engineering',
+        'TensorFlow',
+        'FastAPI',
+      ],
+      outdatedSkills: [
+        'jQuery',
+        'SOAP',
+        'AngularJS',
+        'Bootstrap 3',
+        'Visual Basic',
+      ],
+    };
+
+    setCompletedRecord(newRecord);
+    if (onAnalysisComplete) {
+      onAnalysisComplete(newRecord);
+    }
+    setWorkflowState('results');
+  };
+
   // Render AI Processing Screen
   if (workflowState === 'processing') {
     return (
       <AnalyzingCurriculumPage
         theme={theme}
         courseTitle={courseName}
-        onComplete={() => {
-          setWorkflowState('results');
-        }}
+        onComplete={handlePipelineComplete}
       />
     );
   }
@@ -123,9 +172,14 @@ export const UploadCurriculumPage: React.FC<UploadCurriculumPageProps> = ({
       <AnalysisResultsPage
         theme={theme}
         courseTitle={courseName}
+        department={department}
+        semester={semester}
+        academicYear={academicYear}
+        record={completedRecord}
         onNavigateGraph={onNavigateGraph}
         onNavigateRecommendations={onNavigateRecommendations}
         onNavigateDashboard={onNavigateDashboard}
+        onNavigatePastAnalysis={onNavigatePastAnalysis}
         onExportReport={() => window.print()}
       />
     );
