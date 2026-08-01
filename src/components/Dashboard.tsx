@@ -74,7 +74,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   activeWorkspace
 }) => {
   const isDark = theme === 'dark';
-  const { signOut } = useAuth();
+  const { signOut, user, profile } = useAuth();
 
   const handleSignOut = async () => {
     try {
@@ -411,14 +411,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <div className={`p-2 rounded-xl border flex items-center gap-3 ${
             isDark ? 'bg-[#141414] border-[#262626]' : 'bg-[#F8FAFC] border-[#E5E7EB]'
           }`}>
-            <div className="w-8 h-8 rounded-full bg-[#10B981]/20 border border-[#10B981]/40 flex items-center justify-center font-bold text-xs text-[#10B981] flex-shrink-0">
-              DS
+            <div className="w-8 h-8 rounded-full bg-[#10B981]/20 border border-[#10B981]/40 flex items-center justify-center font-bold text-xs text-[#10B981] flex-shrink-0 uppercase">
+              {(profile?.full_name || user?.user_metadata?.full_name || 'D')[0]}
             </div>
             {!sidebarCollapsed && (
               <div className="overflow-hidden flex-1">
-                <div className="font-heading font-semibold text-xs truncate">Dr. Sharma</div>
+                <div className="font-heading font-semibold text-xs truncate">
+                  {profile?.full_name || user?.user_metadata?.full_name || 'Dr. Sharma'}
+                </div>
                 <div className={`text-[10px] truncate ${isDark ? 'text-[#737373]' : 'text-[#9CA3AF]'}`}>
-                  Curriculum HOD
+                  {profile?.role || user?.user_metadata?.role || 'Curriculum HOD'}
                 </div>
               </div>
             )}

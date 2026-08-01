@@ -21,6 +21,8 @@ interface HeroMorningBriefProps {
   onOpenUpload: () => void;
 }
 
+import { useAuth } from '../hooks/useAuth';
+
 export const HeroMorningBrief: React.FC<HeroMorningBriefProps> = ({
   theme,
   onOpenRecommendations,
@@ -28,6 +30,7 @@ export const HeroMorningBrief: React.FC<HeroMorningBriefProps> = ({
   onOpenUpload
 }) => {
   const isDark = theme === 'dark';
+  const { user, profile } = useAuth();
 
   const WORKFLOW_STEPS = [
     { id: '1', title: 'Upload', desc: 'Syllabus PDF/Word', status: 'completed' },
@@ -66,7 +69,7 @@ export const HeroMorningBrief: React.FC<HeroMorningBriefProps> = ({
 
             <div className="flex items-center justify-between">
               <h1 className="font-heading font-bold text-2xl sm:text-3xl lg:text-4xl tracking-tight">
-                Good Morning, Dr. Sharma 👋
+                Good Morning, {profile?.full_name || user?.user_metadata?.full_name || 'Dr. Sharma'} 👋
               </h1>
             </div>
 

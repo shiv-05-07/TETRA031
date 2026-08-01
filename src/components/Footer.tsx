@@ -1,5 +1,5 @@
 import React from 'react';
-import { GraduationCap, Github, Linkedin, ShieldCheck, ArrowUpRight } from 'lucide-react';
+import { GraduationCap, Github, Linkedin, ShieldCheck } from 'lucide-react';
 import { ThemeMode } from '../types';
 
 interface FooterProps {
@@ -28,19 +28,17 @@ export const Footer: React.FC<FooterProps> = ({ theme }) => {
                 </div>
               </div>
               <span className="font-heading font-bold text-xl tracking-tight">
-                Lumini
+                CurricuAlign <span className="text-[#10B981]">AI</span>
               </span>
             </a>
 
             <p className={`text-xs leading-relaxed max-w-sm ${isDark ? 'text-[#B3B3B3]' : 'text-[#6B7280]'}`}>
-              Enterprise AI curriculum intelligence platform for higher education, accreditation boards, and modern university departments.
+              AI-powered curriculum gap analysis and industry alignment platform for modern higher education institutions.
             </p>
 
             <div className="flex items-center gap-3 pt-2">
               <a
-                href="https://github.com"
-                target="_blank"
-                rel="noreferrer"
+                href="#"
                 aria-label="GitHub"
                 className={`p-2 rounded-xl border transition-colors ${
                   isDark ? 'bg-[#111111] border-[#262626] text-[#B3B3B3] hover:text-[#FAFAFA]' : 'bg-[#F8FAFC] border-[#E5E7EB] text-[#6B7280] hover:text-[#111827]'
@@ -49,9 +47,7 @@ export const Footer: React.FC<FooterProps> = ({ theme }) => {
                 <Github className="w-4 h-4" />
               </a>
               <a
-                href="https://linkedin.com"
-                target="_blank"
-                rel="noreferrer"
+                href="#"
                 aria-label="LinkedIn"
                 className={`p-2 rounded-xl border transition-colors ${
                   isDark ? 'bg-[#111111] border-[#262626] text-[#B3B3B3] hover:text-[#FAFAFA]' : 'bg-[#F8FAFC] border-[#E5E7EB] text-[#6B7280] hover:text-[#111827]'
@@ -68,24 +64,24 @@ export const Footer: React.FC<FooterProps> = ({ theme }) => {
               Navigation
             </span>
             <ul className="space-y-2 text-xs font-medium">
-              <li><a href="#features" className={`transition-colors ${isDark ? 'text-[#B3B3B3] hover:text-[#FAFAFA]' : 'text-[#6B7280] hover:text-[#111827]'}`}>Features & AI Engine</a></li>
-              <li><a href="#sandbox" className={`transition-colors ${isDark ? 'text-[#B3B3B3] hover:text-[#FAFAFA]' : 'text-[#6B7280] hover:text-[#111827]'}`}>Interactive Sandbox</a></li>
-              <li><a href="#solutions" className={`transition-colors ${isDark ? 'text-[#B3B3B3] hover:text-[#FAFAFA]' : 'text-[#6B7280] hover:text-[#111827]'}`}>Department Solutions</a></li>
-              <li><a href="#pricing" className={`transition-colors ${isDark ? 'text-[#B3B3B3] hover:text-[#FAFAFA]' : 'text-[#6B7280] hover:text-[#111827]'}`}>Pricing & Tiers</a></li>
-              <li><a href="#faq" className={`transition-colors ${isDark ? 'text-[#B3B3B3] hover:text-[#FAFAFA]' : 'text-[#6B7280] hover:text-[#111827]'}`}>FAQ</a></li>
+              <li><a href="#features" className={`transition-colors ${isDark ? 'text-[#B3B3B3] hover:text-[#FAFAFA]' : 'text-[#6B7280] hover:text-[#111827]'}`}>Features</a></li>
+              <li><a href="#how-it-works" className={`transition-colors ${isDark ? 'text-[#B3B3B3] hover:text-[#FAFAFA]' : 'text-[#6B7280] hover:text-[#111827]'}`}>How It Works</a></li>
+              <li><a href="#technology" className={`transition-colors ${isDark ? 'text-[#B3B3B3] hover:text-[#FAFAFA]' : 'text-[#6B7280] hover:text-[#111827]'}`}>Technology</a></li>
+              <li><a href="#about" className={`transition-colors ${isDark ? 'text-[#B3B3B3] hover:text-[#FAFAFA]' : 'text-[#6B7280] hover:text-[#111827]'}`}>About</a></li>
+              <li><a href="#contact" className={`transition-colors ${isDark ? 'text-[#B3B3B3] hover:text-[#FAFAFA]' : 'text-[#6B7280] hover:text-[#111827]'}`}>Contact</a></li>
             </ul>
           </div>
 
           {/* Resources & Standards (3 cols) */}
           <div className="md:col-span-3 space-y-3">
             <span className="text-xs font-mono font-bold uppercase tracking-wider text-[#10B981] block">
-              Accreditation Standards
+              Resources
             </span>
             <ul className="space-y-2 text-xs font-medium">
-              <li><a href="#" className={`transition-colors ${isDark ? 'text-[#B3B3B3] hover:text-[#FAFAFA]' : 'text-[#6B7280] hover:text-[#111827]'}`}>ABET Criterion 3 Framework</a></li>
-              <li><a href="#" className={`transition-colors ${isDark ? 'text-[#B3B3B3] hover:text-[#FAFAFA]' : 'text-[#6B7280] hover:text-[#111827]'}`}>IEEE 2025 Computer Science Guidelines</a></li>
-              <li><a href="#" className={`transition-colors ${isDark ? 'text-[#B3B3B3] hover:text-[#FAFAFA]' : 'text-[#6B7280] hover:text-[#111827]'}`}>Bloom's Taxonomy Cognitive Mapping</a></li>
-              <li><a href="#" className={`transition-colors ${isDark ? 'text-[#B3B3B3] hover:text-[#FAFAFA]' : 'text-[#6B7280] hover:text-[#111827]'}`}>LMS QTI Integration Guide</a></li>
+              <li><a href="#" className={`transition-colors ${isDark ? 'text-[#B3B3B3] hover:text-[#FAFAFA]' : 'text-[#6B7280] hover:text-[#111827]'}`}>Skill Ontology Guidelines</a></li>
+              <li><a href="#" className={`transition-colors ${isDark ? 'text-[#B3B3B3] hover:text-[#FAFAFA]' : 'text-[#6B7280] hover:text-[#111827]'}`}>Industry Reports 2025</a></li>
+              <li><a href="#" className={`transition-colors ${isDark ? 'text-[#B3B3B3] hover:text-[#FAFAFA]' : 'text-[#6B7280] hover:text-[#111827]'}`}>Case Studies</a></li>
+              <li><a href="#" className={`transition-colors ${isDark ? 'text-[#B3B3B3] hover:text-[#FAFAFA]' : 'text-[#6B7280] hover:text-[#111827]'}`}>API Documentation</a></li>
             </ul>
           </div>
 
@@ -99,10 +95,10 @@ export const Footer: React.FC<FooterProps> = ({ theme }) => {
             }`}>
               <div className="flex items-center gap-1.5 font-bold text-[#10B981]">
                 <ShieldCheck className="w-4 h-4" />
-                <span>FERPA Compliant</span>
+                <span>Secure Analysis</span>
               </div>
               <p className={`text-[11px] ${isDark ? 'text-[#B3B3B3]' : 'text-[#6B7280]'}`}>
-                SOC2 Type II certified data security architecture.
+                Enterprise-grade privacy for academic curricula.
               </p>
             </div>
           </div>
@@ -112,13 +108,12 @@ export const Footer: React.FC<FooterProps> = ({ theme }) => {
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-[#262626]/40 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
           <p className={isDark ? 'text-[#737373]' : 'text-[#6B7280]'}>
-            © {new Date().getFullYear()} Lumini Inc. All rights reserved.
+            © {new Date().getFullYear()} CurricuAlign AI. All rights reserved.
           </p>
 
           <div className="flex items-center gap-6">
             <a href="#" className={isDark ? 'text-[#B3B3B3] hover:text-[#FAFAFA]' : 'text-[#6B7280] hover:text-[#111827]'}>Privacy Policy</a>
             <a href="#" className={isDark ? 'text-[#B3B3B3] hover:text-[#FAFAFA]' : 'text-[#6B7280] hover:text-[#111827]'}>Terms of Service</a>
-            <a href="#" className={isDark ? 'text-[#B3B3B3] hover:text-[#FAFAFA]' : 'text-[#6B7280] hover:text-[#111827]'}>Security Audit</a>
           </div>
         </div>
 
