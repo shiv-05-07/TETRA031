@@ -154,15 +154,20 @@ export const AnalyzingCurriculumPage: React.FC<AnalyzingCurriculumPageProps> = (
   }, [countdown, isFinished]);
 
   // Transition to completion automatically
+  const completionTriggeredRef = React.useRef(false);
   useEffect(() => {
-    if (isFinished && !isExiting) {
+    if (isFinished && !completionTriggeredRef.current) {
+      completionTriggeredRef.current = true;
       setIsExiting(true);
       const exitTimer = setTimeout(() => {
         onComplete();
-      }, 750); // 750ms Vercel ease-in-out transition duration
-      return () => clearTimeout(exitTimer);
+      }, 750);
+      return () => {
+        // Only clear if component unmounts before timer finishes
+        clearTimeout(exitTimer);
+      };
     }
-  }, [isFinished, isExiting, onComplete]);
+  }, [isFinished, onComplete]);
 
   // Progress percentage calculation
   const progressPercentage = isFinished

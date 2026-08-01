@@ -10,6 +10,7 @@ import {
   Zap,
   Target,
   ArrowRight,
+  ArrowLeft,
   Sparkles,
   Network,
   Clock,
@@ -21,28 +22,45 @@ import { getThemeTokens } from '../theme/tokens';
 import { Card } from './dashboard/Card';
 import { CircularProgress } from './analysis/CircularProgress';
 import { SkillPriorityTable } from './analysis/SkillPriorityTable';
+import { PastAnalysisRecord } from './PastAnalysisPage';
 
 interface AnalysisResultsPageProps {
   theme: ThemeMode;
   courseTitle?: string;
+  department?: string;
+  semester?: string;
+  academicYear?: string;
+  record?: PastAnalysisRecord;
   onNavigateGraph: () => void;
   onNavigateRecommendations: () => void;
   onNavigateDashboard?: () => void;
+  onNavigatePastAnalysis?: () => void;
   onExportReport?: () => void;
 }
 
 export const AnalysisResultsPage: React.FC<AnalysisResultsPageProps> = ({
   theme,
-  courseTitle = 'Data Structures & Algorithms',
+  courseTitle,
+  department,
+  semester,
+  academicYear,
+  record,
   onNavigateGraph,
   onNavigateRecommendations,
   onNavigateDashboard,
+  onNavigatePastAnalysis,
   onExportReport,
 }) => {
   const tokens = getThemeTokens(theme);
 
+  const displayTitle = record?.courseTitle || courseTitle || 'Data Structures and Algorithms';
+  const displayDepartment = record?.department || department || 'Computer Science & Engineering';
+  const displaySemester = record?.semester || semester || 'IV';
+  const displayAcademicYear = record?.academicYear || academicYear || '2025–2026';
+  const displayDate = record?.date || 'Just now';
+
   // Missing Skills Chips
-  const missingSkills = [
+  const missingSkills = record?.missingSkills || [
     'Docker',
     'Kubernetes',
     'LangChain',
@@ -62,7 +80,7 @@ export const AnalysisResultsPage: React.FC<AnalysisResultsPageProps> = ({
   ];
 
   // Outdated Skills Chips
-  const outdatedSkills = [
+  const outdatedSkills = record?.outdatedSkills || [
     'jQuery',
     'SOAP',
     'AngularJS',
@@ -84,16 +102,32 @@ export const AnalysisResultsPage: React.FC<AnalysisResultsPageProps> = ({
     >
       {/* PAGE HEADER */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 py-2">
-        <div>
-          <h1
-            className="text-2xl sm:text-3xl font-bold tracking-tight leading-tight"
-            style={{ color: tokens.textPrimary }}
-          >
-            Analysis Results
-          </h1>
-          <p className="text-sm mt-1" style={{ color: tokens.textSecondary }}>
-            Generated insights from your uploaded curriculum.
-          </p>
+        <div className="flex items-center gap-3">
+          {onNavigatePastAnalysis && (
+            <button
+              onClick={onNavigatePastAnalysis}
+              className="p-2.5 rounded-[12px] border text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+              style={{
+                backgroundColor: tokens.inputBg,
+                borderColor: tokens.border,
+                color: tokens.textSecondary,
+              }}
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back to Past Analysis</span>
+            </button>
+          )}
+          <div>
+            <h1
+              className="text-2xl sm:text-3xl font-bold tracking-tight leading-tight"
+              style={{ color: tokens.textPrimary }}
+            >
+              Analysis Results
+            </h1>
+            <p className="text-sm mt-1" style={{ color: tokens.textSecondary }}>
+              Generated insights from your uploaded curriculum.
+            </p>
+          </div>
         </div>
 
         {/* Right CTA: Export Summary Button */}
@@ -128,14 +162,14 @@ export const AnalysisResultsPage: React.FC<AnalysisResultsPageProps> = ({
 
             <div className="space-y-1">
               <h2 className="text-xl font-bold tracking-tight" style={{ color: tokens.textPrimary }}>
-                {courseTitle}
+                {displayTitle}
               </h2>
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs" style={{ color: tokens.textSecondary }}>
-                <span>Computer Science & Engineering</span>
+                <span>{displayDepartment}</span>
                 <span>•</span>
-                <span>Semester IV</span>
+                <span>Semester {displaySemester}</span>
                 <span>•</span>
-                <span>Academic Year 2025–26</span>
+                <span>Academic Year {displayAcademicYear}</span>
                 <span>•</span>
                 <span>Version 1.0</span>
               </div>
@@ -155,7 +189,7 @@ export const AnalysisResultsPage: React.FC<AnalysisResultsPageProps> = ({
               <span>Completed</span>
             </span>
             <span className="text-[11px] font-medium" style={{ color: tokens.textMuted }}>
-              Analyzed on May 28, 2025 • 11:24 AM
+              Analyzed on {displayDate}
             </span>
           </div>
         </div>

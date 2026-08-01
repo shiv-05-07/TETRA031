@@ -28,6 +28,7 @@ import { AiModernizationPage } from './AiModernizationPage';
 import { AbetReportsPage } from './AbetReportsPage';
 import { UploadCurriculumPage } from './UploadCurriculumPage';
 import { AnalysisResultsPage } from './AnalysisResultsPage';
+import { PastAnalysisPage, PastAnalysisRecord } from './PastAnalysisPage';
 
 interface DashboardProps {
   theme: ThemeMode;
@@ -44,6 +45,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onNavigateAuth,
 }) => {
   const isDark = theme === 'dark';
+  const tokens = getThemeTokens(theme);
   const { signOut, user, profile } = useAuth();
 
   const handleSignOut = async () => {
@@ -60,6 +62,107 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [hasActiveAnalysis, setHasActiveAnalysis] = useState<boolean>(false);
   const [activeAnalysisCourse, setActiveAnalysisCourse] = useState<string>('Data Structures & Algorithms');
+
+  // Past Analyses State
+  const [pastAnalyses, setPastAnalyses] = useState<PastAnalysisRecord[]>([
+    {
+      id: 'p1',
+      courseCode: 'CS-8042',
+      courseTitle: 'Advanced Machine Learning & MLOps',
+      department: 'Computer Engineering',
+      semester: 'VII',
+      academicYear: '2025 - 2026',
+      curriculumVersion: '3.4',
+      date: 'May 28, 2025',
+      alignmentScore: 92,
+      coveragePercentage: 78.4,
+      totalSkills: 180,
+      coveredSkills: 141,
+      missingSkillsCount: 24,
+      outdatedSkillsCount: 15,
+      status: 'Completed',
+      missingSkills: ['vLLM', 'Ray', 'MCP Protocol', 'Kubeflow', 'Triton'],
+      outdatedSkills: ['Scikit-Learn 0.20', 'TensorFlow 1.x', 'Keras 2.0'],
+    },
+    {
+      id: 'p2',
+      courseCode: 'CS-3010',
+      courseTitle: 'Operating Systems & Linux Kernel',
+      department: 'Information Technology',
+      semester: 'V',
+      academicYear: '2025 - 2026',
+      curriculumVersion: '2.1',
+      date: 'May 24, 2025',
+      alignmentScore: 74,
+      coveragePercentage: 62.0,
+      totalSkills: 140,
+      coveredSkills: 87,
+      missingSkillsCount: 38,
+      outdatedSkillsCount: 15,
+      status: 'Needs Review',
+      missingSkills: ['eBPF', 'Rust Kernel Modules', 'Container Runtimes', 'CGroups v2'],
+      outdatedSkills: ['SysV init', 'Ext3 FS', '32-bit x86 Arch'],
+    },
+    {
+      id: 'p3',
+      courseCode: 'CS-5090',
+      courseTitle: 'Cloud Computing & Serverless Architecture',
+      department: 'Computer Engineering',
+      semester: 'VI',
+      academicYear: '2024 - 2025',
+      curriculumVersion: '1.8',
+      date: 'May 18, 2025',
+      alignmentScore: 95,
+      coveragePercentage: 88.5,
+      totalSkills: 160,
+      coveredSkills: 142,
+      missingSkillsCount: 12,
+      outdatedSkillsCount: 6,
+      status: 'Completed',
+      missingSkills: ['Cloudflare Workers', 'Wasmer', 'OpenTelemetry'],
+      outdatedSkills: ['EC2 Classic', 'Docker Swarm'],
+    },
+    {
+      id: 'p4',
+      courseCode: 'CS-2020',
+      courseTitle: 'Data Structures and Algorithms',
+      department: 'Computer Science and Engineering',
+      semester: 'IV',
+      academicYear: '2024 - 2025',
+      curriculumVersion: '1.0',
+      date: 'May 10, 2025',
+      alignmentScore: 88,
+      coveragePercentage: 56.8,
+      totalSkills: 162,
+      coveredSkills: 92,
+      missingSkillsCount: 48,
+      outdatedSkillsCount: 22,
+      status: 'Completed',
+      missingSkills: ['Docker', 'Kubernetes', 'LangChain', 'GraphRAG', 'Neo4j', 'FastAPI'],
+      outdatedSkills: ['jQuery', 'SOAP', 'AngularJS', 'Bootstrap 3'],
+    },
+    {
+      id: 'p5',
+      courseCode: 'CS-4080',
+      courseTitle: 'Database Systems & Distributed Storage',
+      department: 'Information Technology',
+      semester: 'IV',
+      academicYear: '2024 - 2025',
+      curriculumVersion: '1.2',
+      date: 'Apr 29, 2025',
+      alignmentScore: 68,
+      coveragePercentage: 52.0,
+      totalSkills: 150,
+      coveredSkills: 78,
+      missingSkillsCount: 52,
+      outdatedSkillsCount: 20,
+      status: 'In Progress',
+      missingSkills: ['Vector Databases', 'Milvus', 'Pinecone', 'RAG Search', 'CockroachDB'],
+      outdatedSkills: ['Oracle 10g', 'Sybase', 'MS Access'],
+    },
+  ]);
+
+  const [selectedAnalysisRecord, setSelectedAnalysisRecord] = useState<PastAnalysisRecord | undefined>();
 
   // Interactive Drawers & Modals
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -171,6 +274,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
     }, 2000);
   };
 
+  const handleAddNewAnalysisRecord = (newRecord: PastAnalysisRecord) => {
+    setPastAnalyses((prev) => [newRecord, ...prev]);
+  };
+
+  const handleDeleteAnalysisRecord = (id: string) => {
+    setPastAnalyses((prev) => prev.filter((r) => r.id !== id));
+  };
+
   return (
     <DashboardLayout
       theme={theme}
@@ -192,6 +303,31 @@ export const Dashboard: React.FC<DashboardProps> = ({
           onNavigateGraph={() => setActiveTab('graph')}
           onNavigateRecommendations={() => setActiveTab('recommendations')}
           onNavigateDashboard={() => setActiveTab('dashboard')}
+          onNavigatePastAnalysis={() => setActiveTab('past_analysis')}
+          onAnalysisComplete={handleAddNewAnalysisRecord}
+        />
+      ) : activeTab === 'past_analysis' ? (
+        <PastAnalysisPage
+          theme={theme}
+          records={pastAnalyses}
+          onSelectAnalysis={(record) => {
+            setSelectedAnalysisRecord(record);
+            setActiveTab('view_analysis_report');
+          }}
+          onNavigateGraph={() => setActiveTab('graph')}
+          onNavigateRecommendations={() => setActiveTab('recommendations')}
+          onOpenUpload={() => setActiveTab('upload')}
+          onDeleteRecord={handleDeleteAnalysisRecord}
+        />
+      ) : activeTab === 'view_analysis_report' ? (
+        <AnalysisResultsPage
+          theme={theme}
+          record={selectedAnalysisRecord}
+          onNavigateGraph={() => setActiveTab('graph')}
+          onNavigateRecommendations={() => setActiveTab('recommendations')}
+          onNavigateDashboard={() => setActiveTab('dashboard')}
+          onNavigatePastAnalysis={() => setActiveTab('past_analysis')}
+          onExportReport={() => window.print()}
         />
       ) : activeTab === 'workspace' ? (
         <AiAnalysisWorkspace
