@@ -42,6 +42,7 @@ import {
   Network
 } from 'lucide-react';
 import { ThemeMode, InstitutionWorkspace } from '../types';
+import { useAuth } from '../hooks/useAuth';
 
 import { HeroMorningBrief } from './HeroMorningBrief';
 import { SkillGapHeatmap } from './SkillGapHeatmap';
@@ -73,6 +74,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
   activeWorkspace
 }) => {
   const isDark = theme === 'dark';
+  const { signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      onNavigateAuth();
+    } catch (err) {
+      console.error('Failed to sign out', err);
+    }
+  };
 
   // Navigation & View States
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -413,7 +424,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             )}
             {!sidebarCollapsed && (
               <button
-                onClick={onNavigateAuth}
+                onClick={handleSignOut}
                 title="Sign Out"
                 className={`p-1 rounded hover:text-red-400 transition-colors ${isDark ? 'text-[#737373]' : 'text-[#9CA3AF]'}`}
               >

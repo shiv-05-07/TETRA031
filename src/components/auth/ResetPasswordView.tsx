@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import { Lock, Eye, EyeOff, CheckCircle2, ArrowRight, Loader2, KeyRound } from 'lucide-react';
 import { ThemeMode } from '../../types';
 import { PasswordStrengthMeter, CapsLockWarning } from './PasswordSecurityTools';
+import { supabase } from '../../lib/supabase';
 
 interface ResetPasswordViewProps {
   email?: string;
@@ -28,7 +29,7 @@ export const ResetPasswordView: React.FC<ResetPasswordViewProps> = ({
   const [isSuccess, setIsSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
 
@@ -48,13 +49,18 @@ export const ResetPasswordView: React.FC<ResetPasswordViewProps> = ({
     }
 
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    
+    setIsLoading(false);
+    
+    if (error) {
+      setErrorMsg(error.message);
+    } else {
       setIsSuccess(true);
       setTimeout(() => {
         onResetComplete();
       }, 1500);
-    }, 1200);
+    }
   };
 
   return (

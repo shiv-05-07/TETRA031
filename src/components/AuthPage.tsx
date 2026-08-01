@@ -33,6 +33,7 @@ import { EmailVerificationView } from './auth/EmailVerificationView';
 import { ForgotPasswordView } from './auth/ForgotPasswordView';
 import { ResetPasswordView } from './auth/ResetPasswordView';
 import { SessionManager } from './auth/SessionManager';
+import { supabase } from '../lib/supabase';
 
 export type AuthTab = 'signIn' | 'signUp' | 'forgotPassword' | 'verification';
 
@@ -85,7 +86,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
   const [formSuccess, setFormSuccess] = useState<string | null>(null);
 
   // Handler for Sign In
-  const handleSignIn = (e: React.FormEvent) => {
+  const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
     setFormSuccess(null);
@@ -95,29 +96,65 @@ export const AuthPage: React.FC<AuthPageProps> = ({
       return;
     }
 
+    console.log("[Auth] Attempting Sign In for:", signInEmail);
     setIsLoading(true);
-    setTimeout(() => {
+
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: signInEmail,
+        password: signInPassword,
+      });
+      
+      console.log("[Auth] Sign In Response:", { data, error });
+      
+      if (error) {
+        setFormError(error.message);
+      } else if (data.user && !data.user.email_confirmed_at) {
+        console.warn("[Auth] Email not confirmed for user:", data.user.id);
+        await supabase.auth.signOut();
+        setFormError("Please verify your email before logging in.");
+      } else {
+        console.log("[Auth] Sign In Successful!");
+        setCurrentStep('institutionSelection');
+      }
+    } catch (err: any) {
+      console.error("[Auth] Sign In Exception:", err);
+      setFormError(err.message || 'An unexpected error occurred during sign in.');
+    } finally {
       setIsLoading(false);
-      // Navigate to Institution Selection after successful login
-      setCurrentStep('institutionSelection');
-    }, 1000);
+    }
   };
 
   // Handler for SSO Login (Google / Microsoft)
-  const handleSSOLogin = (provider: 'Google' | 'Microsoft') => {
+  const handleSSOLogin = async (provider: 'Google' | 'Microsoft') => {
     setFormError(null);
     setIsLoading(true);
-    setTimeout(() => {
+    console.log(`[Auth] Attempting OAuth login with: ${provider}`);
+    
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: provider === 'Google' ? 'google' : 'azure',
+        options: {
+          redirectTo: window.location.origin,
+        }
+      });
+
+      console.log(`[Auth] OAuth Response for ${provider}:`, { data, error });
+
+      if (error) {
+        setFormError(error.message);
+      }
+    } catch (err: any) {
+      console.error(`[Auth] OAuth Exception for ${provider}:`, err);
+      setFormError(err.message || 'An unexpected error occurred during SSO login.');
+    } finally {
+      // If OAuth works, it redirects the page, so this only matters on error
       setIsLoading(false);
-      setFormSuccess(`Authenticated via ${provider} Workspace SSO!`);
-      setTimeout(() => {
-        setCurrentStep('institutionSelection');
-      }, 600);
-    }, 1000);
+    }
   };
 
   // Handler for Register Step 1 -> Role Selection or Verification
-  const handleRegisterSubmit = (e: React.FormEvent) => {
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
 
@@ -136,12 +173,38 @@ export const AuthPage: React.FC<AuthPageProps> = ({
       return;
     }
 
+    console.log("[Auth] Attempting Registration for:", signUpUniversityEmail);
     setIsLoading(true);
-    setTimeout(() => {
+    
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: signUpUniversityEmail,
+        password: signUpPassword,
+        options: {
+          data: {
+            full_name: signUpFullName,
+            institution_name: signUpInstitutionName,
+            department: signUpDepartment,
+            role: signUpRole
+          }
+        }
+      });
+      
+      console.log("[Auth] Registration Response:", { data, error });
+      
+      if (error) {
+        setFormError(error.message);
+      } else {
+        console.log("[Auth] Registration Successful!");
+        // Move to Role Selection or Verification
+        setCurrentStep('roleSelection');
+      }
+    } catch (err: any) {
+      console.error("[Auth] Registration Exception:", err);
+      setFormError(err.message || 'An unexpected error occurred during registration.');
+    } finally {
       setIsLoading(false);
-      // Move to Role Selection or Verification
-      setCurrentStep('roleSelection');
-    }, 1000);
+    }
   };
 
   // Handler for Role Confirmation
