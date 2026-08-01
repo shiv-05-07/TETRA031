@@ -33,6 +33,7 @@ import { EmailVerificationView } from './auth/EmailVerificationView';
 import { ForgotPasswordView } from './auth/ForgotPasswordView';
 import { ResetPasswordView } from './auth/ResetPasswordView';
 import { SessionManager } from './auth/SessionManager';
+import { supabase } from '../lib/supabase';
 
 export type AuthTab = 'signIn' | 'signUp' | 'forgotPassword' | 'verification';
 
@@ -85,7 +86,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
   const [formSuccess, setFormSuccess] = useState<string | null>(null);
 
   // Handler for Sign In
-  const handleSignIn = (e: React.FormEvent) => {
+  const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
     setFormSuccess(null);
@@ -96,11 +97,19 @@ export const AuthPage: React.FC<AuthPageProps> = ({
     }
 
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
+    const { error } = await supabase.auth.signInWithPassword({
+      email: signInEmail,
+      password: signInPassword,
+    });
+    
+    setIsLoading(false);
+
+    if (error) {
+      setFormError(error.message);
+    } else {
       // Navigate to Institution Selection after successful login
       setCurrentStep('institutionSelection');
-    }, 1000);
+    }
   };
 
   // Handler for SSO Login (Google / Microsoft)
@@ -117,7 +126,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
   };
 
   // Handler for Register Step 1 -> Role Selection or Verification
-  const handleRegisterSubmit = (e: React.FormEvent) => {
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
 
@@ -137,11 +146,28 @@ export const AuthPage: React.FC<AuthPageProps> = ({
     }
 
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
+    
+    // Pass user metadata along with signup
+    const { error } = await supabase.auth.signUp({
+      email: signUpUniversityEmail,
+      password: signUpPassword,
+      options: {
+        data: {
+          full_name: signUpFullName,
+          institution: signUpInstitutionName,
+          department: signUpDepartment,
+        }
+      }
+    });
+
+    setIsLoading(false);
+
+    if (error) {
+      setFormError(error.message);
+    } else {
       // Move to Role Selection or Verification
       setCurrentStep('roleSelection');
-    }, 1000);
+    }
   };
 
   // Handler for Role Confirmation
