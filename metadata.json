@@ -1,0 +1,6 @@
+{
+  "name": "CirrculAI",
+  "description": "Enterprise AI-powered curriculum intelligence and learning content platform for universities and educational institutions.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
