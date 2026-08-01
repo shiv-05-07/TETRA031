@@ -1,2020 +1,846 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { CustomSelect } from './CustomSelect';
 import {
-  Network,
   Search,
-  RefreshCw,
-  Zap,
-  SlidersHorizontal,
-  Download,
-  Share2,
+  Filter,
+  Settings,
+  X,
   Maximize2,
-  Minimize2,
-  Play,
-  Pause,
   ZoomIn,
   ZoomOut,
-  RotateCcw,
-  Sparkles,
-  Layers,
-  Cpu,
+  Maximize,
+  GraduationCap,
   BookOpen,
+  Target,
+  Zap,
   Briefcase,
-  Globe,
-  Terminal,
-  CheckCircle2,
-  AlertTriangle,
-  Info,
-  ChevronRight,
-  ChevronDown,
-  X,
-  ShieldCheck,
-  TrendingUp,
-  Award,
-  Filter,
   Code,
-  ArrowRight,
-  Database,
-  Grid,
-  Eye,
-  Sliders,
-  Share,
-  FileCode,
-  GitMerge,
-  HelpCircle,
-  BrainCircuit
+  Network,
+  Lock,
+  Plus,
+  Minus
 } from 'lucide-react';
 import { ThemeMode } from '../types';
+import { getThemeTokens } from '../theme/tokens';
+import { ThemeToggle } from './dashboard/ThemeToggle';
+import { SummaryCards } from './graph/SummaryCards';
+import { GraphToolbar } from './graph/GraphToolbar';
+import { NodeDetailsPanel, SelectedNodeDetails } from './graph/NodeDetailsPanel';
+import { FilterDrawer } from './graph/FilterDrawer';
 
 interface KnowledgeGraphExplorerPageProps {
   theme: ThemeMode;
   onOpenWorkspace?: (courseCode: string) => void;
   onExportGraph?: () => void;
+  onToggleTheme?: () => void;
 }
 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// GRAPH DATA MODEL & ONTOLOGY TYPES
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-export type NodeType =
+export type GraphCategory =
   | 'Course'
+  | 'Module'
   | 'Course Outcome'
-  | 'Program Outcome'
   | 'Skill'
+  | 'Industry Role'
   | 'Technology'
-  | 'Framework'
-  | 'Tool'
-  | 'Certification'
-  | 'Job Role'
-  | 'Industry';
+  | 'Market Demand';
 
-export interface GraphNode {
+export interface NeoNode {
   id: string;
   name: string;
-  type: NodeType;
-  department?: string;
-  semester?: string;
+  category: GraphCategory;
+  nodeId?: string;
   description: string;
-  demand: number; // 0-100
-  coverage: number; // 0-100
-  isMissing?: boolean;
-  isEmerging?: boolean;
-  x?: number;
-  y?: number;
+  x: number;
+  y: number;
   vx?: number;
   vy?: number;
-  coursesUsing?: string[];
-  missingDepts?: string[];
-  aiRecommendation?: string;
-  confidence?: number;
+  demandPercent?: string;
+  relatedSkills?: string[];
+  relatedCourses?: string[];
+  relatedRoles?: string[];
+  connectedTechnologies?: string[];
 }
 
-export interface GraphEdge {
+export interface NeoEdge {
   id: string;
   source: string;
   target: string;
   label: string;
-  type?: 'core' | 'missing' | 'emerging' | 'outcome';
-  confidence?: number;
-  evidence?: string;
+  color?: string;
 }
 
-// Node Type Color Palette
-export const NODE_TYPE_COLORS: Record<NodeType, { bg: string; border: string; text: string; hex: string; lightHex: string }> = {
-  Course: { bg: 'bg-slate-500/20', border: 'border-slate-500', text: 'text-slate-400', hex: '#64748B', lightHex: '#475569' },
-  'Course Outcome': { bg: 'bg-cyan-500/20', border: 'border-cyan-500', text: 'text-cyan-400', hex: '#06B6D4', lightHex: '#0284C7' },
-  'Program Outcome': { bg: 'bg-blue-500/20', border: 'border-blue-500', text: 'text-blue-400', hex: '#3B82F6', lightHex: '#2563EB' },
-  Skill: { bg: 'bg-emerald-500/20', border: 'border-emerald-500', text: 'text-emerald-400', hex: '#10B981', lightHex: '#059669' },
-  Technology: { bg: 'bg-emerald-400/20', border: 'border-emerald-400', text: 'text-emerald-300', hex: '#34D399', lightHex: '#10B981' },
-  Framework: { bg: 'bg-teal-500/20', border: 'border-teal-500', text: 'text-teal-400', hex: '#14B8A6', lightHex: '#0D9488' },
-  Tool: { bg: 'bg-sky-500/20', border: 'border-sky-500', text: 'text-sky-400', hex: '#0EA5E9', lightHex: '#0284C7' },
-  Certification: { bg: 'bg-amber-500/20', border: 'border-amber-500', text: 'text-amber-400', hex: '#F59E0B', lightHex: '#D97706' },
-  'Job Role': { bg: 'bg-purple-500/20', border: 'border-purple-500', text: 'text-purple-400', hex: '#8B5CF6', lightHex: '#7C3AED' },
-  Industry: { bg: 'bg-indigo-500/20', border: 'border-indigo-500', text: 'text-indigo-400', hex: '#6366F1', lightHex: '#4F46E5' },
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// COLOR MAPPING FOR NODE CATEGORIES & EDGES
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+export const CATEGORY_COLORS: Record<
+  GraphCategory,
+  { bg: string; border: string; hex: string; glow: string; text: string }
+> = {
+  Course: {
+    bg: 'rgba(67, 216, 84, 0.15)',
+    border: '#43D854',
+    hex: '#43D854',
+    glow: 'rgba(67, 216, 84, 0.4)',
+    text: '#43D854',
+  },
+  Module: {
+    bg: 'rgba(59, 130, 246, 0.15)',
+    border: '#3B82F6',
+    hex: '#3B82F6',
+    glow: 'rgba(59, 130, 246, 0.4)',
+    text: '#60A5FA',
+  },
+  'Course Outcome': {
+    bg: 'rgba(139, 92, 246, 0.15)',
+    border: '#8B5CF6',
+    hex: '#8B5CF6',
+    glow: 'rgba(139, 92, 246, 0.4)',
+    text: '#A78BFA',
+  },
+  Skill: {
+    bg: 'rgba(245, 158, 11, 0.15)',
+    border: '#F59E0B',
+    hex: '#F59E0B',
+    glow: 'rgba(245, 158, 11, 0.4)',
+    text: '#FBBF24',
+  },
+  'Industry Role': {
+    bg: 'rgba(6, 182, 212, 0.15)',
+    border: '#06B6D4',
+    hex: '#06B6D4',
+    glow: 'rgba(6, 182, 212, 0.4)',
+    text: '#22D3EE',
+  },
+  Technology: {
+    bg: 'rgba(168, 85, 247, 0.15)',
+    border: '#A855F7',
+    hex: '#A855F7',
+    glow: 'rgba(168, 85, 247, 0.4)',
+    text: '#C084FC',
+  },
+  'Market Demand': {
+    bg: 'rgba(239, 68, 68, 0.15)',
+    border: '#EF4444',
+    hex: '#EF4444',
+    glow: 'rgba(239, 68, 68, 0.4)',
+    text: '#F87171',
+  },
 };
 
-// INITIAL GRAPH DATASET
-const INITIAL_NODES: GraphNode[] = [
-  // COURSES
+export const EDGE_COLORS: Record<string, string> = {
+  HAS_MODULE: '#43D854',
+  HAS_OUTCOME: '#3B82F6',
+  REQUIRES_SKILL: '#F59E0B',
+  LEADS_TO: '#06B6D4',
+  USES_TECHNOLOGY: '#8B5CF6',
+  IN_DEMAND_FOR: '#EF4444',
+};
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// INITIAL NEO4J ONTOLOGY GRAPH DATASET
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const NEO_NODES: NeoNode[] = [
+  // Layer 1: Course (Green)
   {
     id: 'c1',
-    name: 'CS-3010 Operating Systems',
-    type: 'Course',
-    department: 'Computer Engineering',
-    semester: 'Sem 4',
-    description: 'Fundamental OS concepts: process management, virtual memory, concurrency, and Linux kernel internals.',
-    demand: 88,
-    coverage: 82,
-    x: 120,
-    y: 180,
-    coursesUsing: ['CS-3010 Operating Systems'],
-    missingDepts: ['Mechanical Engineering'],
-    aiRecommendation: 'Introduce Linux eBPF kernel tracing lab.',
-    confidence: 96
-  },
-  {
-    id: 'c2',
-    name: 'CS-8042 Advanced ML & GenAI',
-    type: 'Course',
-    department: 'Computer Engineering',
-    semester: 'Sem 6',
-    description: 'Deep learning architectures, transformers, RAG systems, and enterprise LLM deployment pipelines.',
-    demand: 98,
-    coverage: 68,
-    x: 120,
-    y: 380,
-    coursesUsing: ['CS-8042 Advanced ML & GenAI'],
-    missingDepts: ['Civil Engineering', 'Electrical Engineering'],
-    aiRecommendation: 'Add Unit 4: Model Context Protocol (MCP) & vLLM serving.',
-    confidence: 98
-  },
-  {
-    id: 'c3',
-    name: 'CS-4080 Modern Database Systems',
-    type: 'Course',
-    department: 'Information Technology',
-    semester: 'Sem 5',
-    description: 'Relational query engines, indexing, distributed NoSQL, and high-dimensional vector databases.',
-    demand: 92,
-    coverage: 74,
-    x: 120,
-    y: 580,
-    coursesUsing: ['CS-4080 Modern Database Systems'],
-    missingDepts: ['Electronics'],
-    aiRecommendation: 'Incorporate pgvector & Milvus indexing module.',
-    confidence: 95
-  },
-  {
-    id: 'c4',
-    name: 'CS-5090 Cloud Native Computing',
-    type: 'Course',
-    department: 'Computer Engineering',
-    semester: 'Sem 6',
-    description: 'Microservices architecture, containerization, Kubernetes orchestration, and CI/CD pipelines.',
-    demand: 95,
-    coverage: 45,
-    isMissing: true,
-    x: 120,
-    y: 780,
-    coursesUsing: ['CS-5090 Cloud Native Computing'],
-    missingDepts: ['Mechanical Engineering'],
-    aiRecommendation: 'Upgrade Kubernetes lab from 2 credits to 4 credits.',
-    confidence: 97
+    name: 'Data Structures and Algorithms',
+    category: 'Course',
+    nodeId: 'ID: COURSE_001',
+    description: 'Core computer science course covering fundamental data structures, graph algorithms, and time complexity.',
+    x: 500,
+    y: 90,
   },
 
-  // COURSE OUTCOMES
+  // Layer 2: Modules (Blue)
   {
-    id: 'co1',
-    name: 'CO-1: Kernel Subsystems & Syscalls',
-    type: 'Course Outcome',
-    description: 'Demonstrate proficiency in process context switching and virtual memory paging.',
-    demand: 85,
-    coverage: 90,
-    x: 320,
-    y: 180,
-    coursesUsing: ['CS-3010 Operating Systems']
+    id: 'm1',
+    name: 'Arrays & Linked Lists',
+    category: 'Module',
+    nodeId: 'ID: MOD_010',
+    description: 'Linear data structures, memory allocation, and contiguous storage techniques.',
+    x: 250,
+    y: 200,
   },
   {
-    id: 'co2',
-    name: 'CO-2: Vector Similarity & HNSW',
-    type: 'Course Outcome',
-    description: 'Construct sub-10ms nearest-neighbor indices for dense high-dimensional text embeddings.',
-    demand: 96,
-    coverage: 32,
-    isMissing: true,
-    x: 320,
-    y: 380,
-    coursesUsing: ['CS-8042 Advanced ML & GenAI']
+    id: 'm2',
+    name: 'Trees & Graphs',
+    category: 'Module',
+    nodeId: 'ID: MOD_020',
+    description: 'Hierarchical tree topologies, binary search trees, and adjacency graphs.',
+    x: 500,
+    y: 200,
   },
   {
-    id: 'co3',
-    name: 'CO-3: ACID Transactions & Indexing',
-    type: 'Course Outcome',
-    description: 'Design B-Tree and LSM-Tree storage structures with crash recovery logging.',
-    demand: 90,
-    coverage: 88,
-    x: 320,
-    y: 580,
-    coursesUsing: ['CS-4080 Modern Database Systems']
-  },
-  {
-    id: 'co4',
-    name: 'CO-4: Microservice Container Layering',
-    type: 'Course Outcome',
-    description: 'Optimize multi-stage Dockerfiles and Helm chart deployments for production clusters.',
-    demand: 94,
-    coverage: 40,
-    isMissing: true,
-    x: 320,
-    y: 780,
-    coursesUsing: ['CS-5090 Cloud Native Computing']
+    id: 'm3',
+    name: 'Sorting & Searching',
+    category: 'Module',
+    nodeId: 'ID: MOD_030',
+    description: 'Divide-and-conquer algorithms, quicksort, mergesort, and binary search.',
+    x: 750,
+    y: 200,
   },
 
-  // SKILLS
+  // Layer 3: Course Outcomes (Purple)
   {
-    id: 'sk1',
-    name: 'Linux Kernel & Process Control',
-    type: 'Skill',
-    description: 'Mastery of POSIX syscalls, cgroups v2, and memory mapping primitives.',
-    demand: 88,
-    coverage: 85,
-    x: 520,
-    y: 180,
-    coursesUsing: ['CS-3010 Operating Systems']
+    id: 'o1',
+    name: 'Understand linear data structures',
+    category: 'Course Outcome',
+    nodeId: 'ID: OUTCOME_101',
+    description: 'Ability to construct and evaluate dynamic linked lists and stack/queue primitives.',
+    x: 250,
+    y: 310,
   },
   {
-    id: 'sk2',
-    name: 'Approximate Nearest Neighbor (ANN)',
-    type: 'Skill',
-    description: 'Fast cosine and L2 distance calculation over millions of float vectors.',
-    demand: 94,
-    coverage: 28,
-    isMissing: true,
-    x: 520,
-    y: 340,
-    coursesUsing: ['CS-8042 Advanced ML & GenAI']
+    id: 'o2',
+    name: 'Apply tree and graph concepts',
+    category: 'Course Outcome',
+    nodeId: 'ID: OUTCOME_102',
+    description: 'Formulate tree traversals and graph pathfinding algorithms for complex networks.',
+    x: 500,
+    y: 310,
   },
   {
-    id: 'sk3',
-    name: 'Prompt Engineering & Context Window',
-    type: 'Skill',
-    description: 'System prompting, zero/few-shot in-context learning, and token budget management.',
-    demand: 95,
-    coverage: 22,
-    isMissing: true,
-    isEmerging: true,
-    x: 520,
+    id: 'o3',
+    name: 'Analyze algorithm efficiency',
+    category: 'Course Outcome',
+    nodeId: 'ID: OUTCOME_103',
+    description: 'Evaluate Big-O time and space asymptotic bounds for recursive routines.',
+    x: 750,
+    y: 310,
+  },
+
+  // Layer 4: Skills (Yellow)
+  {
+    id: 's1',
+    name: 'Problem Solving',
+    category: 'Skill',
+    nodeId: 'ID: SKILL_00101',
+    description: 'Analytical decomposition of complex technical problems into algorithmic components.',
+    x: 170,
     y: 440,
-    coursesUsing: ['CS-8042 Advanced ML & GenAI']
   },
   {
-    id: 'sk4',
-    name: 'Container Layer Optimization',
-    type: 'Skill',
-    description: 'Minimizing image size, cache mounting, and distroless runtime security.',
-    demand: 91,
-    coverage: 42,
-    isMissing: true,
-    x: 520,
-    y: 740,
-    coursesUsing: ['CS-5090 Cloud Native Computing']
+    id: 's2',
+    name: 'Data Structure Design',
+    category: 'Skill',
+    nodeId: 'ID: SKILL_00102',
+    description: 'Designing space-efficient custom data structures tailored for high-throughput I/O.',
+    x: 300,
+    y: 440,
+  },
+  {
+    id: 's3',
+    name: 'Graph Traversal',
+    category: 'Skill',
+    nodeId: 'ID: SKILL_00345',
+    description: 'Techniques to visit all vertices and edges in a graph systematically.',
+    x: 430,
+    y: 440,
+    relatedSkills: [
+      'Depth First Search',
+      'Breadth First Search',
+      'Topological Sort',
+      'Shortest Path',
+      'Minimum Spanning Tree',
+    ],
+    relatedCourses: [
+      'Data Structures and Algorithms',
+      'Discrete Mathematics',
+      'Graph Theory',
+    ],
+    relatedRoles: [
+      'Software Engineer',
+      'Data Scientist',
+      'ML Engineer',
+      'Research Engineer',
+    ],
+    connectedTechnologies: ['Python', 'C++', 'NetworkX'],
+  },
+  {
+    id: 's4',
+    name: 'Tree Traversal',
+    category: 'Skill',
+    nodeId: 'ID: SKILL_00346',
+    description: 'In-order, pre-order, post-order, and level-order search strategies on N-ary trees.',
+    x: 560,
+    y: 440,
+  },
+  {
+    id: 's5',
+    name: 'Algorithm Analysis',
+    category: 'Skill',
+    nodeId: 'ID: SKILL_00347',
+    description: 'Proving correctness and worst-case mathematical runtime complexity bounds.',
+    x: 690,
+    y: 440,
+  },
+  {
+    id: 's6',
+    name: 'Time & Space Complexity',
+    category: 'Skill',
+    nodeId: 'ID: SKILL_00348',
+    description: 'Profiling auxiliary space allocation and CPU instruction cycles in production code.',
+    x: 820,
+    y: 440,
   },
 
-  // TECHNOLOGIES
+  // Layer 5: Industry Roles (Cyan)
+  {
+    id: 'r1',
+    name: 'Software Engineer',
+    category: 'Industry Role',
+    nodeId: 'ID: ROLE_501',
+    description: 'Builds enterprise software applications, backend microservices, and client systems.',
+    x: 350,
+    y: 570,
+  },
+  {
+    id: 'r2',
+    name: 'Data Scientist',
+    category: 'Industry Role',
+    nodeId: 'ID: ROLE_502',
+    description: 'Extracts statistical insights, builds predictive models, and analyzes graph datasets.',
+    x: 500,
+    y: 570,
+  },
+  {
+    id: 'r3',
+    name: 'ML Engineer',
+    category: 'Industry Role',
+    nodeId: 'ID: ROLE_503',
+    description: 'Deploys machine learning models, vector similarity indices, and neural networks at scale.',
+    x: 650,
+    y: 570,
+  },
+
+  // Layer 6: Market Demand (Red)
+  {
+    id: 'd1',
+    name: 'High Demand (85%)',
+    category: 'Market Demand',
+    nodeId: 'ID: DEMAND_01',
+    demandPercent: '85%',
+    description: 'High market hiring frequency across tech startups and enterprise firms.',
+    x: 350,
+    y: 690,
+  },
+  {
+    id: 'd2',
+    name: 'Very High Demand (92%)',
+    category: 'Market Demand',
+    nodeId: 'ID: DEMAND_02',
+    demandPercent: '92%',
+    description: 'Extremely high demand surge in tech job listings and cloud software sectors.',
+    x: 500,
+    y: 690,
+  },
+  {
+    id: 'd3',
+    name: 'Very High Demand (90%)',
+    category: 'Market Demand',
+    nodeId: 'ID: DEMAND_03',
+    demandPercent: '90%',
+    description: 'Top hiring priority in AI and machine learning engineering domains.',
+    x: 650,
+    y: 690,
+  },
+
+  // Side Nodes: Technologies (Violet)
   {
     id: 't1',
-    name: 'Linux (Debian/Ubuntu/eBPF)',
-    type: 'Technology',
-    description: 'Enterprise server operating system kernel with eBPF tracing hooks.',
-    demand: 92,
-    coverage: 88,
-    x: 720,
-    y: 180,
-    coursesUsing: ['CS-3010 Operating Systems']
+    name: 'Python',
+    category: 'Technology',
+    nodeId: 'ID: TECH_801',
+    description: 'High-level programming language widely used in AI, data science, and scripting.',
+    x: 930,
+    y: 280,
   },
   {
     id: 't2',
-    name: 'Vector Databases (Milvus/pgvector)',
-    type: 'Technology',
-    description: 'Dedicated GPU & CPU similarity search infrastructure for enterprise RAG.',
-    demand: 95,
-    coverage: 12,
-    isMissing: true,
-    isEmerging: true,
-    x: 720,
-    y: 340,
-    coursesUsing: ['CS-8042 Advanced ML & GenAI', 'CS-4080 Modern Database Systems'],
-    missingDepts: ['Information Technology', 'Electronics'],
-    aiRecommendation: 'High Priority: Add dedicated vector search lab.',
-    confidence: 99
+    name: 'C++',
+    category: 'Technology',
+    nodeId: 'ID: TECH_802',
+    description: 'High-performance systems programming language for low-level memory control.',
+    x: 930,
+    y: 370,
   },
   {
     id: 't3',
-    name: 'Model Context Protocol (MCP)',
-    type: 'Technology',
-    description: 'Open standard protocol connecting AI models with local/remote data tools securely.',
-    demand: 88,
-    coverage: 0,
-    isMissing: true,
-    isEmerging: true,
-    x: 720,
+    name: 'Java',
+    category: 'Technology',
+    nodeId: 'ID: TECH_803',
+    description: 'Object-oriented language popular for enterprise systems and Android backends.',
+    x: 930,
     y: 460,
-    coursesUsing: [],
-    missingDepts: ['All Departments'],
-    aiRecommendation: 'Emerging protocol: Add 1-week hands-on MCP server lab.',
-    confidence: 97
   },
   {
     id: 't4',
-    name: 'Docker & OCI Containers',
-    type: 'Technology',
-    description: 'Standard container virtualization engine for application isolation.',
-    demand: 94,
-    coverage: 48,
-    isMissing: true,
-    x: 720,
-    y: 700,
-    coursesUsing: ['CS-5090 Cloud Native Computing']
+    name: 'NetworkX',
+    category: 'Technology',
+    nodeId: 'ID: TECH_804',
+    description: 'Python library for the creation, manipulation, and study of complex networks.',
+    x: 930,
+    y: 550,
   },
-  {
-    id: 't5',
-    name: 'PyTorch & Transformers',
-    type: 'Technology',
-    description: 'De-facto deep learning framework for training and fine-tuning neural nets.',
-    demand: 96,
-    coverage: 80,
-    x: 720,
-    y: 260,
-    coursesUsing: ['CS-8042 Advanced ML & GenAI']
-  },
-
-  // FRAMEWORKS & TOOLS
-  {
-    id: 'fw1',
-    name: 'Kubernetes Orchestration (k8s)',
-    type: 'Framework',
-    description: 'Automated deployment, scaling, and management of containerized applications.',
-    demand: 92,
-    coverage: 18,
-    isMissing: true,
-    x: 920,
-    y: 720,
-    coursesUsing: ['CS-5090 Cloud Native Computing'],
-    missingDepts: ['Computer Engineering'],
-    aiRecommendation: 'Connect Kubernetes with CS-3010 Operating Systems.',
-    confidence: 96
-  },
-  {
-    id: 'fw2',
-    name: 'LangGraph & Multi-Agent Swarms',
-    type: 'Framework',
-    description: 'Stateful graph-based routing framework for complex LLM agent workflows.',
-    demand: 86,
-    coverage: 5,
-    isMissing: true,
-    isEmerging: true,
-    x: 920,
-    y: 420,
-    coursesUsing: ['CS-8042 Advanced ML & GenAI']
-  },
-  {
-    id: 'fw3',
-    name: 'vLLM Serving Engine',
-    type: 'Tool',
-    description: 'High-throughput low-latency LLM serving engine with PagedAttention.',
-    demand: 82,
-    coverage: 0,
-    isMissing: true,
-    isEmerging: true,
-    x: 920,
-    y: 520,
-    coursesUsing: []
-  },
-
-  // CERTIFICATIONS
-  {
-    id: 'cert1',
-    name: 'Certified Kubernetes Administrator (CKA)',
-    type: 'Certification',
-    description: 'Linux Foundation official certification for k8s cluster administration.',
-    demand: 88,
-    coverage: 40,
-    x: 1080,
-    y: 760,
-    coursesUsing: ['CS-5090 Cloud Native Computing']
-  },
-  {
-    id: 'cert2',
-    name: 'AWS Certified AI Practitioner',
-    type: 'Certification',
-    description: 'Validation of foundational GenAI & machine learning cloud services.',
-    demand: 85,
-    coverage: 50,
-    x: 1080,
-    y: 300,
-    coursesUsing: ['CS-8042 Advanced ML & GenAI']
-  },
-
-  // JOB ROLES
-  {
-    id: 'jr1',
-    name: 'Cloud Infrastructure Engineer',
-    type: 'Job Role',
-    description: 'Builds and maintains scalable AWS/GCP cloud environments and k8s platforms.',
-    demand: 94,
-    coverage: 72,
-    x: 1240,
-    y: 700,
-    coursesUsing: ['CS-5090 Cloud Native Computing', 'CS-3010 Operating Systems']
-  },
-  {
-    id: 'jr2',
-    name: 'AI / LLM Systems Engineer',
-    type: 'Job Role',
-    description: 'Designs enterprise RAG systems, agentic loops, and vector database pipelines.',
-    demand: 98,
-    coverage: 64,
-    x: 1240,
-    y: 380,
-    coursesUsing: ['CS-8042 Advanced ML & GenAI']
-  },
-  {
-    id: 'jr3',
-    name: 'Senior Data Platform Engineer',
-    type: 'Job Role',
-    description: 'Engineers distributed relational, document, and vector data processing engines.',
-    demand: 91,
-    coverage: 78,
-    x: 1240,
-    y: 560,
-    coursesUsing: ['CS-4080 Modern Database Systems']
-  },
-
-  // INDUSTRIES
-  {
-    id: 'ind1',
-    name: 'Cloud & SaaS Enterprises',
-    type: 'Industry',
-    description: 'Global cloud platforms, SaaS companies, and Fortune 500 IT infrastructure.',
-    demand: 96,
-    coverage: 85,
-    x: 1420,
-    y: 680
-  },
-  {
-    id: 'ind2',
-    name: 'Artificial Intelligence & GenAI',
-    type: 'Industry',
-    description: 'Frontier AI labs, enterprise GenAI applications, and autonomous agents.',
-    demand: 99,
-    coverage: 70,
-    x: 1420,
-    y: 380
-  }
 ];
 
-// INITIAL GRAPH EDGES
-const INITIAL_EDGES: GraphEdge[] = [
-  // Course -> Outcome
-  { id: 'e1', source: 'c1', target: 'co1', label: 'teaches', type: 'core' },
-  { id: 'e2', source: 'c2', target: 'co2', label: 'teaches', type: 'missing' },
-  { id: 'e3', source: 'c3', target: 'co3', label: 'teaches', type: 'core' },
-  { id: 'e4', source: 'c4', target: 'co4', label: 'teaches', type: 'missing' },
+const NEO_EDGES: NeoEdge[] = [
+  // Course -> Modules
+  { id: 'e1', source: 'c1', target: 'm1', label: 'HAS_MODULE' },
+  { id: 'e2', source: 'c1', target: 'm2', label: 'HAS_MODULE' },
+  { id: 'e3', source: 'c1', target: 'm3', label: 'HAS_MODULE' },
 
-  // Outcome -> Skill
-  { id: 'e5', source: 'co1', target: 'sk1', label: 'develops', type: 'core' },
-  { id: 'e6', source: 'co2', target: 'sk2', label: 'develops', type: 'missing' },
-  { id: 'e7', source: 'co2', target: 'sk3', label: 'requires', type: 'emerging' },
-  { id: 'e8', source: 'co4', target: 'sk4', label: 'develops', type: 'missing' },
+  // Modules -> Outcomes
+  { id: 'e4', source: 'm1', target: 'o1', label: 'HAS_OUTCOME' },
+  { id: 'e5', source: 'm2', target: 'o2', label: 'HAS_OUTCOME' },
+  { id: 'e6', source: 'm3', target: 'o3', label: 'HAS_OUTCOME' },
 
-  // Skill -> Technology
-  { id: 'e9', source: 'sk1', target: 't1', label: 'utilizes', type: 'core' },
-  { id: 'e10', source: 'sk2', target: 't2', label: 'implemented_in', type: 'missing' },
-  { id: 'e11', source: 'sk3', target: 't3', label: 'standardized_by', type: 'emerging' },
-  { id: 'e12', source: 'sk4', target: 't4', label: 'built_on', type: 'missing' },
-  { id: 'e13', source: 'co2', target: 't5', label: 'uses_framework', type: 'core' },
+  // Outcomes -> Skills
+  { id: 'e7', source: 'o1', target: 's1', label: 'REQUIRES_SKILL' },
+  { id: 'e8', source: 'o1', target: 's2', label: 'REQUIRES_SKILL' },
+  { id: 'e9', source: 'o2', target: 's3', label: 'REQUIRES_SKILL' },
+  { id: 'e10', source: 'o2', target: 's4', label: 'REQUIRES_SKILL' },
+  { id: 'e11', source: 'o3', target: 's5', label: 'REQUIRES_SKILL' },
+  { id: 'e12', source: 'o3', target: 's6', label: 'REQUIRES_SKILL' },
 
-  // Technology -> Framework/Tool
-  { id: 'e14', source: 't4', target: 'fw1', label: 'orchestrated_by', type: 'missing' },
-  { id: 'e15', source: 't3', target: 'fw2', label: 'executed_in', type: 'emerging' },
-  { id: 'e16', source: 't5', target: 'fw3', label: 'served_via', type: 'emerging' },
+  // Skills -> Roles
+  { id: 'e13', source: 's1', target: 'r1', label: 'LEADS_TO' },
+  { id: 'e14', source: 's2', target: 'r1', label: 'LEADS_TO' },
+  { id: 'e15', source: 's3', target: 'r2', label: 'LEADS_TO' },
+  { id: 'e16', source: 's4', target: 'r2', label: 'LEADS_TO' },
+  { id: 'e17', source: 's5', target: 'r3', label: 'LEADS_TO' },
+  { id: 'e18', source: 's6', target: 'r3', label: 'LEADS_TO' },
 
-  // Framework/Tech -> Certification
-  { id: 'e17', source: 'fw1', target: 'cert1', label: 'prepares_for', type: 'core' },
-  { id: 'e18', source: 't5', target: 'cert2', label: 'prepares_for', type: 'core' },
+  // Roles -> Market Demand
+  { id: 'e19', source: 'r1', target: 'd1', label: 'IN_DEMAND_FOR' },
+  { id: 'e20', source: 'r2', target: 'd2', label: 'IN_DEMAND_FOR' },
+  { id: 'e21', source: 'r3', target: 'd3', label: 'IN_DEMAND_FOR' },
 
-  // Framework/Tech -> Job Role
-  { id: 'e19', source: 'fw1', target: 'jr1', label: 'qualifies_for', type: 'core' },
-  { id: 'e20', source: 't2', target: 'jr2', label: 'essential_for', type: 'missing' },
-  { id: 'e21', source: 'fw2', target: 'jr2', label: 'essential_for', type: 'emerging' },
-  { id: 'e22', source: 'co3', target: 'jr3', label: 'qualifies_for', type: 'core' },
-
-  // Job Role -> Industry
-  { id: 'e23', source: 'jr1', target: 'ind1', label: 'employed_in', type: 'core' },
-  { id: 'e24', source: 'jr2', target: 'ind2', label: 'employed_in', type: 'core' },
-
-  // Missing Link Recommendations
-  { id: 'e25', source: 'c1', target: 't4', label: 'should_connect_to', type: 'missing', confidence: 96, evidence: '82% of OS course syllabi in Tier-1 universities include Docker containerization labs.' },
-  { id: 'e26', source: 'c3', target: 't2', label: 'missing_vector_db', type: 'missing', confidence: 98, evidence: '+195% growth in modern DB job roles requiring pgvector/Milvus indexing.' }
+  // Outcomes / Skills -> Technologies
+  { id: 'e22', source: 'o3', target: 't1', label: 'USES_TECHNOLOGY' },
+  { id: 'e23', source: 's3', target: 't2', label: 'USES_TECHNOLOGY' },
+  { id: 'e24', source: 's6', target: 't3', label: 'USES_TECHNOLOGY' },
+  { id: 'e25', source: 's3', target: 't4', label: 'USES_TECHNOLOGY' },
 ];
 
 export const KnowledgeGraphExplorerPage: React.FC<KnowledgeGraphExplorerPageProps> = ({
   theme,
   onOpenWorkspace,
-  onExportGraph
+  onExportGraph,
+  onToggleTheme,
 }) => {
+  const tokens = getThemeTokens(theme);
   const isDark = theme === 'dark';
 
-  // Canvas & Physics State
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [nodes, setNodes] = useState<GraphNode[]>(INITIAL_NODES);
-  const [edges, setEdges] = useState<GraphEdge[]>(INITIAL_EDGES);
-
-  // Interaction State
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>('t2'); // Vector DBs default selected
-  const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>('e26');
+  // Interactive Graph Controls State
+  const [nodes, setNodes] = useState<NeoNode[]>(NEO_NODES);
+  const [edges] = useState<NeoEdge[]>(NEO_EDGES);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedNodeId, setSelectedNodeId] = useState<string>('s3'); // Default: Graph Traversal
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
-  const [isPhysicsRunning, setIsPhysicsRunning] = useState<boolean>(true);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [selectedView, setSelectedView] = useState('Skill Ontology');
+
+  // Zoom & Pan state
   const [zoomLevel, setZoomLevel] = useState<number>(1);
-  const [panOffset, setPanOffset] = useState<{ x: number; y: number }>({ x: 20, y: 20 });
+  const [panOffset, setPanOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [isDraggingNode, setIsDraggingNode] = useState<string | null>(null);
   const [dragStartPos, setDragStartPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
-  // Hold and Move (Canvas Panning State)
-  const [isPanningCanvas, setIsPanningCanvas] = useState<boolean>(false);
-  const [panStartPos, setPanStartPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-  const [panStartOffset, setPanStartOffset] = useState<{ x: number; y: number }>({ x: 20, y: 20 });
-  const [draggedDistance, setDraggedDistance] = useState<number>(0);
+  // Category Visibility Filter
+  const [activeCategories, setActiveCategories] = useState<Record<string, boolean>>({
+    Courses: true,
+    Modules: true,
+    'Course Outcomes': true,
+    Skills: true,
+    'Industry Roles': true,
+    Technologies: true,
+    'Market Demand': true,
+  });
 
-  // Traversal & Guided Tour State
-  const [traversalPath, setTraversalPath] = useState<string[]>(['c2', 'co2', 'sk2', 't2', 'jr2']);
-  const [activeTraverseIndex, setActiveTraverseIndex] = useState<number>(3); // Index of 't2'
-  const [isAutoTraversing, setIsAutoTraversing] = useState<boolean>(false);
-  const [traversalSpeedMs, setTraversalSpeedMs] = useState<number>(2500);
+  // Filtered Nodes & Edges
+  const visibleNodes = useMemo(() => {
+    return nodes.filter((n) => {
+      // Category filter
+      let catKey = n.category as string;
+      if (catKey === 'Course') catKey = 'Courses';
+      if (catKey === 'Module') catKey = 'Modules';
+      if (catKey === 'Course Outcome') catKey = 'Course Outcomes';
+      if (catKey === 'Skill') catKey = 'Skills';
+      if (catKey === 'Industry Role') catKey = 'Industry Roles';
+      if (catKey === 'Technology') catKey = 'Technologies';
+      if (catKey === 'Market Demand') catKey = 'Market Demand';
 
-  // Filters State
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([
-    'Course',
-    'Course Outcome',
-    'Skill',
-    'Technology',
-    'Framework',
-    'Tool',
-    'Certification',
-    'Job Role',
-    'Industry'
-  ]);
-  const [selectedDept, setSelectedDept] = useState('All');
-  const [selectedSemester, setSelectedSemester] = useState('All');
-  const [onlyMissingSkills, setOnlyMissingSkills] = useState(false);
-  const [onlyEmergingTech, setOnlyEmergingTech] = useState(false);
-  const [alignmentThreshold, setAlignmentThreshold] = useState<number>(0);
+      if (activeCategories[catKey] === false) return false;
 
-  // Timeline State: Current | Projected | Future
-  const [timelineMode, setTimelineMode] = useState<'current' | 'projected' | 'future'>('current');
-
-  // UI Panel Drawer States
-  const [showCypherTerminal, setShowCypherTerminal] = useState(false);
-  const [showLegend, setShowLegend] = useState(true);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
-
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3000);
-  };
-
-  // Selected Node Data
-  const selectedNode = useMemo(() => {
-    return nodes.find(n => n.id === selectedNodeId) || null;
-  }, [nodes, selectedNodeId]);
-
-  // Selected Edge Data
-  const selectedEdge = useMemo(() => {
-    return edges.find(e => e.id === selectedEdgeId) || null;
-  }, [edges, selectedEdgeId]);
-
-  // Smooth Camera Focus on Node
-  const focusOnNode = (nodeId: string, customZoom?: number) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const targetNode = nodes.find(n => n.id === nodeId);
-    if (!targetNode) return;
-
-    const width = canvas.width || 800;
-    const height = canvas.height || 600;
-    const newZoom = customZoom !== undefined ? customZoom : Math.max(zoomLevel, 1.1);
-
-    const targetPanX = width / 2 - (targetNode.x || 0) * newZoom;
-    const targetPanY = height / 2 - (targetNode.y || 0) * newZoom;
-
-    setZoomLevel(newZoom);
-    setPanOffset({ x: targetPanX, y: targetPanY });
-    setSelectedNodeId(nodeId);
-    setSelectedEdgeId(null);
-  };
-
-  // Traversal Helper Actions
-  const traverseToNode = (targetNodeId: string) => {
-    if (!traversalPath.includes(targetNodeId)) {
-      const newPath = [...traversalPath.slice(0, activeTraverseIndex + 1), targetNodeId];
-      setTraversalPath(newPath);
-      setActiveTraverseIndex(newPath.length - 1);
-    } else {
-      const idx = traversalPath.indexOf(targetNodeId);
-      setActiveTraverseIndex(idx);
-    }
-    focusOnNode(targetNodeId);
-    const targetNode = nodes.find(n => n.id === targetNodeId);
-    showToast(`Traversed to ${targetNode?.name || targetNodeId}`);
-  };
-
-  const stepNextTraversal = () => {
-    if (activeTraverseIndex < traversalPath.length - 1) {
-      const nextIdx = activeTraverseIndex + 1;
-      setActiveTraverseIndex(nextIdx);
-      focusOnNode(traversalPath[nextIdx]);
-    } else {
-      showToast('Reached end of current traversal sequence.');
-    }
-  };
-
-  const stepPrevTraversal = () => {
-    if (activeTraverseIndex > 0) {
-      const prevIdx = activeTraverseIndex - 1;
-      setActiveTraverseIndex(prevIdx);
-      focusOnNode(traversalPath[prevIdx]);
-    }
-  };
-
-  // Auto-Traversal Loop
-  useEffect(() => {
-    if (!isAutoTraversing || traversalPath.length === 0) return;
-
-    const timer = setInterval(() => {
-      setActiveTraverseIndex(prev => {
-        const nextIdx = (prev + 1) % traversalPath.length;
-        focusOnNode(traversalPath[nextIdx]);
-        const targetNode = nodes.find(n => n.id === traversalPath[nextIdx]);
-        showToast(`⚡ Auto-Tour [Step ${nextIdx + 1}/${traversalPath.length}]: ${targetNode?.name || ''}`);
-        return nextIdx;
-      });
-    }, traversalSpeedMs);
-
-    return () => clearInterval(timer);
-  }, [isAutoTraversing, traversalPath, traversalSpeedMs, nodes]);
-
-  // Neighbor nodes of current selected node
-  const currentNeighbors = useMemo(() => {
-    if (!selectedNodeId) return [];
-    const list: { node: GraphNode; edge: GraphEdge; direction: 'outgoing' | 'incoming' }[] = [];
-    edges.forEach(e => {
-      if (e.source === selectedNodeId) {
-        const tNode = nodes.find(n => n.id === e.target);
-        if (tNode) list.push({ node: tNode, edge: e, direction: 'outgoing' });
-      } else if (e.target === selectedNodeId) {
-        const sNode = nodes.find(n => n.id === e.source);
-        if (sNode) list.push({ node: sNode, edge: e, direction: 'incoming' });
-      }
-    });
-    return list;
-  }, [selectedNodeId, edges, nodes]);
-
-  // Toggle Category Filter
-  const toggleCategory = (cat: string) => {
-    setSelectedCategories(prev =>
-      prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]
-    );
-  };
-
-  // Filtered Nodes
-  const filteredNodes = useMemo(() => {
-    return nodes.filter(node => {
-      // Category match
-      if (!selectedCategories.includes(node.type)) return false;
-
-      // Search Query
+      // Search query filter
       if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
-        const matchName = node.name.toLowerCase().includes(q);
-        const matchType = node.type.toLowerCase().includes(q);
-        const matchDesc = node.description.toLowerCase().includes(q);
-        if (!matchName && !matchType && !matchDesc) return false;
+        const query = searchQuery.toLowerCase();
+        return (
+          n.name.toLowerCase().includes(query) ||
+          n.category.toLowerCase().includes(query) ||
+          (n.nodeId && n.nodeId.toLowerCase().includes(query))
+        );
       }
-
-      // Dept match
-      if (selectedDept !== 'All' && node.department && node.department !== selectedDept) return false;
-
-      // Semester match
-      if (selectedSemester !== 'All' && node.semester && node.semester !== selectedSemester) return false;
-
-      // Only Missing
-      if (onlyMissingSkills && !node.isMissing) return false;
-
-      // Only Emerging
-      if (onlyEmergingTech && !node.isEmerging) return false;
-
-      // Alignment Threshold
-      if (node.coverage < alignmentThreshold) return false;
-
       return true;
     });
-  }, [nodes, selectedCategories, searchQuery, selectedDept, selectedSemester, onlyMissingSkills, onlyEmergingTech, alignmentThreshold]);
+  }, [nodes, activeCategories, searchQuery]);
 
-  const filteredNodeIds = useMemo(() => new Set(filteredNodes.map(n => n.id)), [filteredNodes]);
+  const visibleNodeIds = useMemo(() => new Set(visibleNodes.map((n) => n.id)), [visibleNodes]);
 
-  // Connected Node IDs for Selected Node
-  const connectedNodeIds = useMemo(() => {
-    if (!selectedNodeId) return new Set<string>();
-    const set = new Set<string>();
-    set.add(selectedNodeId);
-    edges.forEach(e => {
-      if (e.source === selectedNodeId) set.add(e.target);
-      if (e.target === selectedNodeId) set.add(e.source);
-    });
-    return set;
-  }, [selectedNodeId, edges]);
+  const visibleEdges = useMemo(() => {
+    return edges.filter((e) => visibleNodeIds.has(e.source) && visibleNodeIds.has(e.target));
+  }, [edges, visibleNodeIds]);
 
-  // Traversal Edge Set for Rendering Beams
-  const traversalEdgeKeys = useMemo(() => {
-    const set = new Set<string>();
-    for (let i = 0; i < traversalPath.length - 1; i++) {
-      const u = traversalPath[i];
-      const v = traversalPath[i + 1];
-      edges.forEach(e => {
-        if ((e.source === u && e.target === v) || (e.source === v && e.target === u)) {
-          set.add(e.id);
-        }
-      });
-    }
-    return set;
-  }, [traversalPath, edges]);
-
-  // Handle Timeline switching node highlights or positions
-  useEffect(() => {
-    if (timelineMode === 'projected') {
-      showToast('Projected Timeline: 1-click AI curriculum fixes applied (+14% alignment gain).');
-    } else if (timelineMode === 'future') {
-      showToast('Future Trends Timeline: Integrating 2026 emerging skill nodes (MCP, Agentic Swarms, vLLM).');
-    }
-  }, [timelineMode]);
-
-  // CANVAS FORCE SIMULATION & RENDER ENGINE
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    let animId: number;
-    let particleOffset = 0;
-
-    const render = () => {
-      // Handle Resize
-      const width = canvas.parentElement?.clientWidth || 1000;
-      const height = canvas.parentElement?.clientHeight || 650;
-      if (canvas.width !== width || canvas.height !== height) {
-        canvas.width = width;
-        canvas.height = height;
-      }
-
-      // Physics Simulation Step (simple force repulsion and edge tension)
-      if (isPhysicsRunning) {
-        particleOffset = (particleOffset + 0.8) % 100;
-      }
-
-      // Clear Canvas
-      ctx.clearRect(0, 0, width, height);
-
-      ctx.save();
-      ctx.translate(panOffset.x, panOffset.y);
-      ctx.scale(zoomLevel, zoomLevel);
-
-      // 1. DRAW EDGES
-      edges.forEach(edge => {
-        const sourceNode = nodes.find(n => n.id === edge.source);
-        const targetNode = nodes.find(n => n.id === edge.target);
-        if (!sourceNode || !targetNode) return;
-
-        // Skip if either node is filtered out
-        if (!filteredNodeIds.has(sourceNode.id) || !filteredNodeIds.has(targetNode.id)) return;
-
-        const sx = sourceNode.x || 100;
-        const sy = sourceNode.y || 100;
-        const tx = targetNode.x || 300;
-        const ty = targetNode.y || 300;
-
-        const isConnectedToSelected = selectedNodeId && (edge.source === selectedNodeId || edge.target === selectedNodeId);
-        const isEdgeSelected = selectedEdgeId === edge.id;
-        const isTraversalEdge = traversalEdgeKeys.has(edge.id);
-
-        // Curve Control Point
-        const cx = (sx + tx) / 2;
-        const cy = (sy + ty) / 2 - (edge.type === 'missing' ? 30 : 0);
-
-        ctx.beginPath();
-        ctx.moveTo(sx, sy);
-        ctx.quadraticCurveTo(cx, cy, tx, ty);
-
-        // Edge Style
-        if (isTraversalEdge) {
-          ctx.strokeStyle = '#10B981';
-          ctx.lineWidth = 4;
-          ctx.setLineDash([]);
-        } else if (isEdgeSelected || isConnectedToSelected) {
-          ctx.strokeStyle = '#34D399';
-          ctx.lineWidth = 3;
-          ctx.setLineDash([]);
-        } else if (edge.type === 'missing') {
-          ctx.strokeStyle = isDark ? '#EF4444' : '#DC2626';
-          ctx.lineWidth = 2;
-          ctx.setLineDash([5, 5]);
-        } else if (edge.type === 'emerging') {
-          ctx.strokeStyle = '#F59E0B';
-          ctx.lineWidth = 2;
-          ctx.setLineDash([3, 3]);
-        } else {
-          ctx.strokeStyle = isDark ? '#333333' : '#E2E8F0';
-          ctx.lineWidth = 1.5;
-          ctx.setLineDash([]);
-        }
-
-        ctx.stroke();
-
-        // Particle Flow Animation along Edges
-        if (isPhysicsRunning && (isTraversalEdge || isConnectedToSelected || edge.type === 'core')) {
-          const t = (particleOffset / 100) % 1;
-          const px = (1 - t) * (1 - t) * sx + 2 * (1 - t) * t * cx + t * t * tx;
-          const py = (1 - t) * (1 - t) * sy + 2 * (1 - t) * t * cy + t * t * ty;
-
-          ctx.beginPath();
-          ctx.arc(px, py, isTraversalEdge ? 5 : 3, 0, Math.PI * 2);
-          ctx.fillStyle = isTraversalEdge ? '#34D399' : '#10B981';
-          ctx.shadowColor = '#10B981';
-          ctx.shadowBlur = isTraversalEdge ? 12 : 8;
-          ctx.fill();
-          ctx.shadowBlur = 0;
-        }
-
-        // Edge Label (if selected, hovered, or in traversal path)
-        if (isEdgeSelected || isConnectedToSelected || isTraversalEdge) {
-          ctx.font = '10px Inter, sans-serif';
-          ctx.fillStyle = isDark ? '#A3A3A3' : '#4B5563';
-          ctx.fillText(edge.label, cx - 15, cy - 5);
-        }
-      });
-
-      // 2. DRAW NODES
-      nodes.forEach(node => {
-        if (!filteredNodeIds.has(node.id)) return;
-
-        const nx = node.x || 100;
-        const ny = node.y || 100;
-
-        const isSelected = selectedNodeId === node.id;
-        const isHovered = hoveredNodeId === node.id;
-        const isConnected = connectedNodeIds.has(node.id);
-        const isDimmed = selectedNodeId && !isConnected && !traversalPath.includes(node.id);
-
-        const traversalStepIdx = traversalPath.indexOf(node.id);
-        const isInTraversal = traversalStepIdx !== -1;
-        const isActiveTraversalStep = isInTraversal && activeTraverseIndex === traversalStepIdx;
-
-        const colors = NODE_TYPE_COLORS[node.type] || NODE_TYPE_COLORS.Course;
-        const hexColor = isDark ? colors.hex : colors.lightHex;
-
-        const radius = isSelected || isActiveTraversalStep ? 24 : isHovered ? 20 : 16;
-
-        ctx.save();
-        if (isDimmed) {
-          ctx.globalAlpha = 0.2;
-        }
-
-        // Active Traversal Pulsating Ring
-        if (isActiveTraversalStep) {
-          const pulseR = radius + 10 + Math.sin(particleOffset / 10) * 4;
-          ctx.beginPath();
-          ctx.arc(nx, ny, pulseR, 0, Math.PI * 2);
-          ctx.strokeStyle = '#10B981';
-          ctx.lineWidth = 2.5;
-          ctx.stroke();
-        }
-
-        // Node Glow Effect
-        if (isSelected || isHovered || isInTraversal) {
-          ctx.beginPath();
-          ctx.arc(nx, ny, radius + 8, 0, Math.PI * 2);
-          ctx.fillStyle = `${hexColor}33`;
-          ctx.fill();
-        }
-
-        // Outer Ring for Missing/Emerging
-        if (node.isMissing) {
-          ctx.beginPath();
-          ctx.arc(nx, ny, radius + 3, 0, Math.PI * 2);
-          ctx.strokeStyle = '#EF4444';
-          ctx.lineWidth = 1.5;
-          ctx.setLineDash([3, 3]);
-          ctx.stroke();
-          ctx.setLineDash([]);
-        }
-
-        // Node Main Circle
-        ctx.beginPath();
-        ctx.arc(nx, ny, radius, 0, Math.PI * 2);
-        ctx.fillStyle = isSelected || isActiveTraversalStep ? hexColor : isDark ? '#171717' : '#FFFFFF';
-        ctx.strokeStyle = hexColor;
-        ctx.lineWidth = isSelected || isActiveTraversalStep ? 3 : 2;
-        ctx.fill();
-        ctx.stroke();
-
-        // Node Icon/Indicator Dot
-        ctx.beginPath();
-        ctx.arc(nx, ny, isSelected || isActiveTraversalStep ? 6 : 4, 0, Math.PI * 2);
-        ctx.fillStyle = isSelected || isActiveTraversalStep ? '#FFFFFF' : hexColor;
-        ctx.fill();
-
-        // Traversal Step Number Badge Above Node
-        if (isInTraversal) {
-          const badgeX = nx + radius - 4;
-          const badgeY = ny - radius + 2;
-          ctx.beginPath();
-          ctx.arc(badgeX, badgeY, 9, 0, Math.PI * 2);
-          ctx.fillStyle = isActiveTraversalStep ? '#10B981' : '#059669';
-          ctx.fill();
-          ctx.font = 'bold 10px sans-serif';
-          ctx.fillStyle = '#FFFFFF';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText((traversalStepIdx + 1).toString(), badgeX, badgeY);
-        }
-
-        // Node Text Label
-        ctx.font = isSelected || isActiveTraversalStep ? 'bold 12px Space Grotesk, sans-serif' : '11px Inter, sans-serif';
-        ctx.fillStyle = isSelected || isActiveTraversalStep
-          ? isDark ? '#FFFFFF' : '#111827'
-          : isDark ? '#E5E5E5' : '#1F2937';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'alphabetic';
-        ctx.fillText(node.name, nx, ny + radius + 16);
-
-        // Sublabel (Type)
-        ctx.font = '9px monospace';
-        ctx.fillStyle = hexColor;
-        ctx.fillText(node.type.toUpperCase(), nx, ny + radius + 28);
-
-        ctx.restore();
-      });
-
-      ctx.restore();
-
-      animId = requestAnimationFrame(render);
+  // Selected Node Details
+  const selectedNode = useMemo(() => {
+    const found = nodes.find((n) => n.id === selectedNodeId);
+    if (!found) return null;
+    return {
+      id: found.id,
+      name: found.name,
+      type: found.category,
+      nodeId: found.nodeId,
+      description: found.description,
+      relatedSkills: found.relatedSkills || [
+        'Depth First Search',
+        'Breadth First Search',
+        'Topological Sort',
+      ],
+      relatedCourses: found.relatedCourses || ['Data Structures and Algorithms'],
+      relatedRoles: found.relatedRoles || ['Software Engineer', 'Data Scientist'],
+      connectedTechnologies: found.connectedTechnologies || ['Python', 'C++'],
     };
+  }, [nodes, selectedNodeId]);
 
-    render();
-
-    return () => cancelAnimationFrame(animId);
-  }, [nodes, edges, filteredNodeIds, selectedNodeId, selectedEdgeId, hoveredNodeId, isPhysicsRunning, panOffset, zoomLevel, isDark, traversalPath, activeTraverseIndex, traversalEdgeKeys]);
-
-  // Canvas Mouse Click Handling
-  const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    // If dragged noticeably, do not count as simple click selection
-    if (draggedDistance > 5) return;
-
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const rect = canvas.getBoundingClientRect();
-    const clickX = (e.clientX - rect.left - panOffset.x) / zoomLevel;
-    const clickY = (e.clientY - rect.top - panOffset.y) / zoomLevel;
-
-    // Check Node Hit
-    const clickedNode = nodes.find(node => {
-      if (!filteredNodeIds.has(node.id)) return false;
-      const dx = (node.x || 0) - clickX;
-      const dy = (node.y || 0) - clickY;
-      return Math.sqrt(dx * dx + dy * dy) <= 24;
-    });
-
-    if (clickedNode) {
-      setSelectedNodeId(clickedNode.id);
-      setSelectedEdgeId(null);
-      return;
-    }
-
-    // Check Edge Hit
-    const clickedEdge = edges.find(edge => {
-      const sourceNode = nodes.find(n => n.id === edge.source);
-      const targetNode = nodes.find(n => n.id === edge.target);
-      if (!sourceNode || !targetNode) return false;
-      const sx = sourceNode.x || 0;
-      const sy = sourceNode.y || 0;
-      const tx = targetNode.x || 0;
-      const ty = targetNode.y || 0;
-
-      const l2 = (tx - sx) * (tx - sx) + (ty - sy) * (ty - sy);
-      if (l2 === 0) return false;
-      let t = ((clickX - sx) * (tx - sx) + (clickY - sy) * (ty - sy)) / l2;
-      t = Math.max(0, Math.min(1, t));
-      const projX = sx + t * (tx - sx);
-      const projY = sy + t * (ty - sy);
-      const dist = Math.sqrt((clickX - projX) * (clickX - projX) + (clickY - projY) * (clickY - projY));
-      return dist <= 12;
-    });
-
-    if (clickedEdge) {
-      setSelectedEdgeId(clickedEdge.id);
-      setSelectedNodeId(null);
-      return;
-    }
-
-    // Deselect if background clicked
-    setSelectedNodeId(null);
-    setSelectedEdgeId(null);
+  // Zoom / Fit handlers
+  const handleZoomIn = () => setZoomLevel((prev) => Math.min(2.5, prev + 0.15));
+  const handleZoomOut = () => setZoomLevel((prev) => Math.max(0.5, prev - 0.15));
+  const handleFitGraph = () => {
+    setZoomLevel(1);
+    setPanOffset({ x: 0, y: 0 });
   };
 
-  // Canvas Hold and Move (Node Dragging & Canvas Panning)
-  const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const rect = canvas.getBoundingClientRect();
-    const mouseX = (e.clientX - rect.left - panOffset.x) / zoomLevel;
-    const mouseY = (e.clientY - rect.top - panOffset.y) / zoomLevel;
-
-    setDraggedDistance(0);
-
-    const hitNode = nodes.find(node => {
-      if (!filteredNodeIds.has(node.id)) return false;
-      const dx = (node.x || 0) - mouseX;
-      const dy = (node.y || 0) - mouseY;
-      return Math.sqrt(dx * dx + dy * dy) <= 24;
-    });
-
-    if (hitNode) {
-      setIsDraggingNode(hitNode.id);
-      setDragStartPos({ x: e.clientX, y: e.clientY });
-    } else {
-      setIsPanningCanvas(true);
-      setPanStartPos({ x: e.clientX, y: e.clientY });
-      setPanStartOffset({ ...panOffset });
-    }
+  // Node Dragging Handler
+  const handleNodeMouseDown = (e: React.MouseEvent, nodeId: string) => {
+    e.stopPropagation();
+    setIsDraggingNode(nodeId);
+    setDragStartPos({ x: e.clientX, y: e.clientY });
   };
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const rect = canvas.getBoundingClientRect();
-    const mouseX = (e.clientX - rect.left - panOffset.x) / zoomLevel;
-    const mouseY = (e.clientY - rect.top - panOffset.y) / zoomLevel;
-
-    // Hover detection
-    const hoverNode = nodes.find(node => {
-      if (!filteredNodeIds.has(node.id)) return false;
-      const dx = (node.x || 0) - mouseX;
-      const dy = (node.y || 0) - mouseY;
-      return Math.sqrt(dx * dx + dy * dy) <= 24;
-    });
-
-    setHoveredNodeId(hoverNode ? hoverNode.id : null);
-
-    // Holding and Moving a Node
+  const handleMouseMove = (e: React.MouseEvent) => {
     if (isDraggingNode) {
-      setDraggedDistance(prev => prev + 1);
-      setNodes(prev =>
-        prev.map(n =>
-          n.id === isDraggingNode
-            ? { ...n, x: mouseX, y: mouseY }
-            : n
+      const dx = (e.clientX - dragStartPos.x) / zoomLevel;
+      const dy = (e.clientY - dragStartPos.y) / zoomLevel;
+      setDragStartPos({ x: e.clientX, y: e.clientY });
+
+      setNodes((prevNodes) =>
+        prevNodes.map((n) =>
+          n.id === isDraggingNode ? { ...n, x: n.x + dx, y: n.y + dy } : n
         )
       );
-    }
-    // Holding and Moving the Canvas (Panning)
-    else if (isPanningCanvas) {
-      setDraggedDistance(prev => prev + 1);
-      const dx = e.clientX - panStartPos.x;
-      const dy = e.clientY - panStartPos.y;
-      setPanOffset({
-        x: panStartOffset.x + dx,
-        y: panStartOffset.y + dy
-      });
     }
   };
 
   const handleMouseUp = () => {
     setIsDraggingNode(null);
-    setIsPanningCanvas(false);
-  };
-
-  // Canvas Mouse Wheel Smooth Zoom
-  const handleWheel = (e: React.WheelEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const rect = canvas.getBoundingClientRect();
-    const mouseCanvasX = (e.clientX - rect.left - panOffset.x) / zoomLevel;
-    const mouseCanvasY = (e.clientY - rect.top - panOffset.y) / zoomLevel;
-
-    const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
-    const newZoom = Math.min(2.5, Math.max(0.4, zoomLevel * zoomFactor));
-
-    const newPanX = e.clientX - rect.left - mouseCanvasX * newZoom;
-    const newPanY = e.clientY - rect.top - mouseCanvasY * newZoom;
-
-    setZoomLevel(newZoom);
-    setPanOffset({ x: newPanX, y: newPanY });
-  };
-
-  // Canvas Double Click Traversal
-  const handleDoubleClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const rect = canvas.getBoundingClientRect();
-    const clickX = (e.clientX - rect.left - panOffset.x) / zoomLevel;
-    const clickY = (e.clientY - rect.top - panOffset.y) / zoomLevel;
-
-    const hitNode = nodes.find(node => {
-      if (!filteredNodeIds.has(node.id)) return false;
-      const dx = (node.x || 0) - clickX;
-      const dy = (node.y || 0) - clickY;
-      return Math.sqrt(dx * dx + dy * dy) <= 24;
-    });
-
-    if (hitNode) {
-      traverseToNode(hitNode.id);
-    }
-  };
-
-  // Run AI Re-mapping
-  const handleRunMapping = () => {
-    setIsPhysicsRunning(true);
-    showToast('Executing Neo4j Cypher semantic recalculation across 12,400 industry nodes...');
-    setTimeout(() => {
-      showToast('Graph Re-mapping complete! Identified 2 new skill relationships.');
-    }, 1500);
-  };
-
-  // Export Graph
-  const handleExportGraphAction = () => {
-    if (onExportGraph) {
-      onExportGraph();
-    } else {
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ nodes, edges }, null, 2));
-      const downloadAnchor = document.createElement('a');
-      downloadAnchor.setAttribute("href", dataStr);
-      downloadAnchor.setAttribute("download", "lumini_neo4j_knowledge_graph.json");
-      document.body.appendChild(downloadAnchor);
-      downloadAnchor.click();
-      downloadAnchor.remove();
-      showToast('Exported Neo4j Graph JSON artifact!');
-    }
   };
 
   return (
-    <div className={`min-h-screen p-4 sm:p-8 font-sans transition-colors max-w-[1700px] mx-auto space-y-6 ${
-      isDark ? 'bg-[#0A0A0A] text-[#FAFAFA]' : 'bg-[#FAFAFA] text-[#111827]'
-    }`}>
-
-      {/* TOAST NOTIFICATION */}
-      <AnimatePresence>
-        {toastMessage && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="fixed top-6 right-6 z-50 px-4 py-3 rounded-2xl bg-[#10B981] text-white font-semibold text-xs shadow-2xl flex items-center gap-2 border border-white/20"
-          >
-            <CheckCircle2 className="w-4 h-4" />
-            <span>{toastMessage}</span>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-          1. HEADER & CONTROL ACTIONS
-         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-[#262626]/30">
+    <div
+      className="space-y-6 max-w-[1600px] mx-auto pb-12"
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+    >
+      {/* HEADER WITH CONTROLS */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 py-2">
         <div>
-          <div className="flex items-center gap-3">
-            <h1 className="font-heading font-bold text-2xl sm:text-3xl tracking-tight">
-              Knowledge Graph Explorer
-            </h1>
-            <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/30 flex items-center gap-1.5">
-              <Network className="w-3.5 h-3.5" />
-              <span>Neo4j Bloom Engine v5.1</span>
-            </span>
-          </div>
-          <p className={`text-sm mt-1.5 max-w-2xl ${isDark ? 'text-[#A3A3A3]' : 'text-[#6B7280]'}`}>
-            Visualize relationships between curriculum, industry skills, technologies and career opportunities. Live semantic mapping connects course outcomes directly to market demand.
+          <h1
+            className="text-2xl sm:text-3xl font-bold tracking-tight leading-tight"
+            style={{ color: tokens.textPrimary }}
+          >
+            Knowledge Graph
+          </h1>
+          <p className="text-sm mt-1" style={{ color: tokens.textSecondary }}>
+            Visualize the skill ontology and curriculum relationships generated from AI analysis.
           </p>
         </div>
 
-        {/* Top Header Control Buttons */}
-        <div className="flex flex-wrap items-center gap-3">
-          <button
-            onClick={() => setIsPhysicsRunning(!isPhysicsRunning)}
-            className={`px-4 py-2.5 rounded-xl border text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
-              isDark ? 'bg-[#171717] border-[#262626] text-[#B3B3B3] hover:text-white hover:bg-[#202020]' : 'bg-white border-[#E5E7EB] text-[#4B5563] hover:text-[#111827] hover:bg-[#F9FAFB] shadow-sm'
-            }`}
-          >
-            <RefreshCw className={`w-4 h-4 text-[#10B981] ${isPhysicsRunning ? 'animate-spin' : ''}`} />
-            <span>{isPhysicsRunning ? 'Pause Physics' : 'Resume Physics'}</span>
-          </button>
-
-          <button
-            onClick={handleRunMapping}
-            className="px-4 py-2.5 rounded-xl font-bold text-xs text-white bg-[#10B981] hover:bg-[#34D399] transition-all flex items-center gap-2 shadow-lg shadow-[#10B981]/20 cursor-pointer"
-          >
-            <Sparkles className="w-4 h-4" />
-            <span>Run Mapping</span>
-          </button>
-
-          <button
-            onClick={handleExportGraphAction}
-            className={`px-4 py-2.5 rounded-xl border text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
-              isDark ? 'bg-[#171717] border-[#262626] text-[#B3B3B3] hover:text-white hover:bg-[#202020]' : 'bg-white border-[#E5E7EB] text-[#4B5563] hover:text-[#111827] hover:bg-[#F9FAFB] shadow-sm'
-            }`}
-          >
-            <Download className="w-4 h-4 text-emerald-400" />
-            <span>Export Graph</span>
-          </button>
-
-          <button
-            onClick={() => showToast('Shareable Neo4j Bloom workspace link copied to clipboard!')}
-            className={`px-4 py-2.5 rounded-xl border text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
-              isDark ? 'bg-[#171717] border-[#262626] text-[#B3B3B3] hover:text-white hover:bg-[#202020]' : 'bg-white border-[#E5E7EB] text-[#4B5563] hover:text-[#111827] hover:bg-[#F9FAFB] shadow-sm'
-            }`}
-          >
-            <Share2 className="w-4 h-4 text-emerald-400" />
-            <span>Share</span>
-          </button>
-        </div>
-      </div>
-
-      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-          2. SUMMARY GRAPH STATISTICS CARDS
-         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
-        {[
-          { label: 'Total Nodes', val: '1,248', icon: Network, color: '#10B981' },
-          { label: 'Relationships', val: '6,940', icon: GitMerge, color: '#34D399' },
-          { label: 'Courses Mapped', val: '82', icon: BookOpen, color: '#64748B' },
-          { label: 'Skills Ontology', val: '194', icon: Cpu, color: '#10B981' },
-          { label: 'Technologies', val: '147', icon: Layers, color: '#34D399' },
-          { label: 'Job Roles Mapped', val: '36', icon: Briefcase, color: '#8B5CF6' },
-          { label: 'Emerging Skills', val: '28', icon: Zap, color: '#F59E0B' },
-          { label: 'Graph Alignment', val: '87.4%', icon: ShieldCheck, color: '#10B981' }
-        ].map((st, idx) => {
-          const IconComp = st.icon;
-          return (
-            <div
-              key={idx}
-              className={`p-3.5 rounded-[18px] border flex flex-col justify-between space-y-2 ${
-                isDark ? 'bg-[#111111] border-[#262626]' : 'bg-white border-[#E5E7EB] shadow-sm'
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <span className={`text-[9px] font-mono font-bold uppercase tracking-wider ${isDark ? 'text-[#737373]' : 'text-[#6B7280]'}`}>
-                  {st.label}
-                </span>
-                <IconComp className="w-3.5 h-3.5" style={{ color: st.color }} />
-              </div>
-
-              <span className="font-heading font-bold text-xl lg:text-2xl tracking-tight block" style={{ color: st.color }}>
-                {st.val}
-              </span>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-          3. MAIN WORKSPACE: FILTER PANEL + INTERACTIVE CANVAS + DETAILS
-         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[680px]">
-
-        {/* LEFT FILTER PANEL (3 Cols) */}
-        <div className={`lg:col-span-3 p-5 rounded-[24px] border space-y-5 flex flex-col justify-between ${
-          isDark ? 'bg-[#111111] border-[#262626]' : 'bg-white border-[#E5E7EB] shadow-lg'
-        }`}>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between border-b pb-3 border-[#262626]/40">
-              <span className="font-heading font-bold text-sm flex items-center gap-2">
-                <Sliders className="w-4 h-4 text-[#10B981]" />
-                <span>Ontology Filters</span>
-              </span>
-              <button
-                onClick={() => {
-                  setSearchQuery('');
-                  setSelectedDept('All');
-                  setSelectedSemester('All');
-                  setOnlyMissingSkills(false);
-                  setOnlyEmergingTech(false);
-                  setAlignmentThreshold(0);
-                  setSelectedCategories(Object.keys(NODE_TYPE_COLORS));
-                }}
-                className="text-[10px] font-mono text-[#10B981] hover:underline cursor-pointer"
-              >
-                Reset All
-              </button>
-            </div>
-
-            {/* Search Input */}
-            <div className={`flex items-center gap-2 px-3 py-2 rounded-xl border ${
-              isDark ? 'bg-[#171717] border-[#262626] text-white' : 'bg-[#F9FAFB] border-[#E5E7EB] text-[#111827]'
-            }`}>
-              <Search className="w-4 h-4 text-[#737373]" />
-              <input
-                type="text"
-                placeholder="Search nodes (Vector DB, Docker...)"
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                className="w-full bg-transparent text-xs outline-none"
-              />
-              {searchQuery && (
-                <button onClick={() => setSearchQuery('')} className="text-[#737373] hover:text-white">
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
-
-            {/* Node Type Category Toggles */}
-            <div className="space-y-2">
-              <span className="text-[10px] font-mono font-bold text-[#737373] uppercase block">
-                Filter by Node Type ({selectedCategories.length}/10)
-              </span>
-
-              <div className="grid grid-cols-2 gap-1.5 max-h-[160px] overflow-y-auto pr-1 scrollbar-thin">
-                {Object.keys(NODE_TYPE_COLORS).map(cat => {
-                  const isChecked = selectedCategories.includes(cat);
-                  const colors = NODE_TYPE_COLORS[cat as NodeType];
-                  return (
-                    <button
-                      key={cat}
-                      onClick={() => toggleCategory(cat)}
-                      className={`px-2.5 py-1.5 rounded-lg border text-[10px] font-mono text-left flex items-center justify-between transition-all cursor-pointer ${
-                        isChecked
-                          ? isDark ? 'bg-[#1A1A1A] border-[#10B981] text-white' : 'bg-[#F0FDF4] border-[#10B981] text-[#111827]'
-                          : isDark ? 'bg-[#141414] border-[#262626] text-[#737373] opacity-60' : 'bg-[#F9FAFB] border-[#E5E7EB] text-[#9CA3AF]'
-                      }`}
-                    >
-                      <span className="truncate">{cat}</span>
-                      <span className="w-2 h-2 rounded-full flex-shrink-0 ml-1" style={{ backgroundColor: colors.hex }} />
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Department Dropdown */}
-            <div className="space-y-1.5">
-              <span className="text-[10px] font-mono font-bold text-[#737373] uppercase block">Department</span>
-              <CustomSelect
-                size="sm"
-                theme={theme}
-                value={selectedDept}
-                onChange={(val) => setSelectedDept(val)}
-                options={[
-                  { value: "All", label: "All Departments" },
-                  { value: "Computer Engineering", label: "Computer Engineering" },
-                  { value: "Information Technology", label: "Information Technology" },
-                  { value: "Electronics", label: "Electronics" },
-                  { value: "Mechanical Engineering", label: "Mechanical Engineering" }
-                ]}
-              />
-            </div>
-
-            {/* Specialized Toggles */}
-            <div className="space-y-2 pt-2 border-t border-[#262626]/30">
-              <label className="flex items-center justify-between text-xs cursor-pointer">
-                <span className="font-semibold text-red-400">Only Missing Skills</span>
-                <input
-                  type="checkbox"
-                  checked={onlyMissingSkills}
-                  onChange={e => setOnlyMissingSkills(e.target.checked)}
-                  className="accent-[#10B981] rounded cursor-pointer"
-                />
-              </label>
-
-              <label className="flex items-center justify-between text-xs cursor-pointer">
-                <span className="font-semibold text-amber-400">Only Emerging Tech</span>
-                <input
-                  type="checkbox"
-                  checked={onlyEmergingTech}
-                  onChange={e => setOnlyEmergingTech(e.target.checked)}
-                  className="accent-[#10B981] rounded cursor-pointer"
-                />
-              </label>
-            </div>
-
-            {/* Alignment Threshold Slider */}
-            <div className="space-y-2 pt-2 border-t border-[#262626]/30">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-mono text-[#737373]">Alignment Threshold</span>
-                <span className="font-mono font-bold text-[#10B981]">{alignmentThreshold}%</span>
-              </div>
-              <input
-                type="range"
-                min={0}
-                max={90}
-                value={alignmentThreshold}
-                onChange={e => setAlignmentThreshold(Number(e.target.value))}
-                className="w-full accent-[#10B981] cursor-pointer"
-              />
-            </div>
-          </div>
-
-          {/* Timeline Selector Widget */}
-          <div className={`p-3 rounded-2xl border space-y-2 text-xs font-mono ${
-            isDark ? 'bg-[#171717] border-[#262626]' : 'bg-[#F9FAFB] border-[#E5E7EB]'
-          }`}>
-            <span className="text-[10px] text-[#10B981] font-bold block uppercase">
-              ⏱️ Graph Timeline Horizon
-            </span>
-
-            <div className="grid grid-cols-3 gap-1 text-[10px]">
-              {(['current', 'projected', 'future'] as const).map(mode => (
-                <button
-                  key={mode}
-                  onClick={() => setTimelineMode(mode)}
-                  className={`py-1.5 rounded-lg font-bold capitalize transition-all cursor-pointer ${
-                    timelineMode === mode
-                      ? 'bg-[#10B981] text-white shadow-md'
-                      : isDark ? 'text-[#A3A3A3] hover:text-white' : 'text-[#6B7280] hover:text-[#111827]'
-                  }`}
-                >
-                  {mode}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* CENTER INTERACTIVE GRAPH CANVAS (6 Cols) */}
-        <div className={`lg:col-span-6 rounded-[24px] border relative overflow-hidden flex flex-col justify-between ${
-          isDark ? 'bg-[#121212] border-[#262626]' : 'bg-white border-[#E5E7EB] shadow-lg'
-        }`}>
-          {/* Top Floating Control Bar */}
-          <div className="absolute top-4 left-4 z-10 flex flex-wrap items-center gap-2 bg-[#171717]/90 backdrop-blur-md p-1.5 rounded-2xl border border-[#262626] text-xs font-mono shadow-xl">
-            <button
-              onClick={() => setZoomLevel(prev => Math.min(prev + 0.15, 2.0))}
-              className="p-1.5 rounded-xl hover:bg-[#262626] text-[#A3A3A3] hover:text-white transition-colors cursor-pointer"
-              title="Zoom In"
-            >
-              <ZoomIn className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => setZoomLevel(prev => Math.max(prev - 0.15, 0.4))}
-              className="p-1.5 rounded-xl hover:bg-[#262626] text-[#A3A3A3] hover:text-white transition-colors cursor-pointer"
-              title="Zoom Out"
-            >
-              <ZoomOut className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => {
-                setZoomLevel(1);
-                setPanOffset({ x: 20, y: 20 });
+        {/* Top Right Controls: Search, Filter, Settings, Theme Toggle */}
+        <div className="flex items-center gap-3 self-start md:self-auto flex-wrap">
+          {/* Search Box */}
+          <div className="relative w-full sm:w-64">
+            <Search className="w-4 h-4 absolute left-3.5 top-3 text-gray-400 pointer-events-none" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search nodes (course, skill, role...)"
+              className="w-full text-xs font-medium pl-10 pr-8 py-2.5 rounded-[12px] border outline-none transition-all"
+              style={{
+                backgroundColor: tokens.inputBg,
+                borderColor: tokens.border,
+                color: tokens.textPrimary,
               }}
-              className="p-1.5 rounded-xl hover:bg-[#262626] text-[#A3A3A3] hover:text-white transition-colors cursor-pointer"
-              title="Reset View"
-            >
-              <RotateCcw className="w-4 h-4" />
-            </button>
-            <span className="text-[#737373] px-2 text-[11px]">Zoom: {Math.round(zoomLevel * 100)}%</span>
-
-            <div className="h-4 w-px bg-[#262626] my-auto mx-1" />
-
-            {/* Traversal Controls */}
-            <div className="flex items-center gap-1">
-              <button
-                onClick={stepPrevTraversal}
-                disabled={activeTraverseIndex <= 0}
-                className="px-2 py-1 rounded-xl bg-[#262626] hover:bg-[#333333] disabled:opacity-30 text-white font-bold text-[10px] flex items-center gap-1 transition-all cursor-pointer"
-                title="Step Backward in Traversal Path"
-              >
-                <span>◀ Step</span>
-              </button>
-              <button
-                onClick={stepNextTraversal}
-                disabled={activeTraverseIndex >= traversalPath.length - 1}
-                className="px-2 py-1 rounded-xl bg-[#10B981] hover:bg-[#34D399] disabled:opacity-30 text-white font-bold text-[10px] flex items-center gap-1 transition-all cursor-pointer shadow-md shadow-[#10B981]/20"
-                title="Step Forward in Traversal Path"
-              >
-                <span>Step ▶</span>
-              </button>
-              <button
-                onClick={() => {
-                  setIsAutoTraversing(!isAutoTraversing);
-                  if (!isAutoTraversing) showToast('Started Automated Curriculum Path Tour (2.5s per hop)');
-                }}
-                className={`px-2.5 py-1 rounded-xl text-[10px] font-bold flex items-center gap-1 transition-all cursor-pointer ${
-                  isAutoTraversing
-                    ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20'
-                    : 'bg-[#262626] text-[#A3A3A3] hover:text-white'
-                }`}
-                title="Auto-Tour Guided Traversal"
-              >
-                {isAutoTraversing ? <Pause className="w-3 h-3 fill-current" /> : <Play className="w-3 h-3 fill-current" />}
-                <span>{isAutoTraversing ? 'Pause Tour' : 'Auto Tour'}</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Top Right Action Overlay */}
-          <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
-            <button
-              onClick={() => setShowCypherTerminal(!showCypherTerminal)}
-              className={`px-3 py-1.5 rounded-xl border text-xs font-mono font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
-                showCypherTerminal
-                  ? 'bg-[#10B981] text-white border-[#10B981]'
-                  : isDark ? 'bg-[#171717]/80 border-[#262626] text-[#A3A3A3]' : 'bg-white/80 border-[#E5E7EB] text-[#4B5563]'
-              }`}
-            >
-              <Terminal className="w-3.5 h-3.5" />
-              <span>Neo4j Cypher</span>
-            </button>
-          </div>
-
-          {/* ACTIVE TRAVERSAL BREADCRUMB OVERLAY */}
-          {traversalPath.length > 0 && (
-            <div className="absolute top-16 left-4 right-4 z-10 bg-[#171717]/95 backdrop-blur-md p-2.5 rounded-2xl border border-[#10B981]/30 shadow-2xl space-y-2">
-              <div className="flex items-center justify-between text-[10px] font-mono">
-                <span className="text-[#10B981] font-bold flex items-center gap-1.5 uppercase tracking-wider">
-                  <BrainCircuit className="w-3.5 h-3.5" /> Active Traversal Path ({activeTraverseIndex + 1}/{traversalPath.length} hops)
-                </span>
-                <span className="text-[#737373] text-[9px]">💡 Double-click any node to traverse into it | Hold & Drag canvas to pan</span>
-              </div>
-
-              {/* Breadcrumbs List */}
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-xs font-mono">
-                {traversalPath.map((nodeId, index) => {
-                  const pathNode = nodes.find(n => n.id === nodeId);
-                  const isActive = index === activeTraverseIndex;
-                  return (
-                    <React.Fragment key={nodeId}>
-                      <button
-                        onClick={() => {
-                          setActiveTraverseIndex(index);
-                          focusOnNode(nodeId);
-                        }}
-                        className={`px-2.5 py-1 rounded-xl border text-[11px] font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${
-                          isActive
-                            ? 'bg-[#10B981] text-white border-[#10B981] shadow-md shadow-[#10B981]/30 scale-105 font-bold'
-                            : isDark ? 'bg-[#262626] text-[#A3A3A3] border-[#333333] hover:text-white' : 'bg-[#F3F4F6] text-[#4B5563] border-[#E5E7EB]'
-                        }`}
-                      >
-                        <span className="text-[9px] opacity-80">{index + 1}.</span>
-                        <span>{pathNode?.name || nodeId}</span>
-                      </button>
-                      {index < traversalPath.length - 1 && (
-                        <ChevronRight className="w-3.5 h-3.5 text-[#10B981] flex-shrink-0 animate-pulse" />
-                      )}
-                    </React.Fragment>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Interactive HTML5 Canvas */}
-          <div className="w-full h-full min-h-[580px] relative cursor-grab active:cursor-grabbing">
-            <canvas
-              ref={canvasRef}
-              onClick={handleCanvasClick}
-              onMouseDown={handleMouseDown}
-              onMouseMove={handleMouseMove}
-              onMouseUp={handleMouseUp}
-              onWheel={handleWheel}
-              onDoubleClick={handleDoubleClick}
-              className="w-full h-full block touch-none"
             />
-          </div>
-
-          {/* Bottom Overlay Legend */}
-          {showLegend && (
-            <div className={`p-3 border-t flex flex-wrap items-center justify-between gap-3 text-[10px] font-mono ${
-              isDark ? 'bg-[#111111]/90 border-[#262626] text-[#A3A3A3]' : 'bg-white/90 border-[#E5E7EB] text-[#4B5563]'
-            }`}>
-              <div className="flex flex-wrap items-center gap-3">
-                <span className="font-bold text-white">Graph Legend:</span>
-                <span className="flex items-center gap-1">
-                  <span className="w-2.5 h-2.5 rounded-full bg-slate-500" /> Course
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Skill
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-300" /> Technology
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="w-2.5 h-2.5 rounded-full bg-purple-500" /> Job Role
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="w-2.5 h-2.5 rounded-full bg-amber-500" /> Cert
-                </span>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <span className="text-red-400 font-bold">--- Missing Link</span>
-                <span>•</span>
-                <span className="text-amber-400 font-bold">--- Emerging Link</span>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* RIGHT DETAILS PANEL (3 Cols) */}
-        <div className={`lg:col-span-3 p-5 rounded-[24px] border space-y-5 flex flex-col justify-between ${
-          isDark ? 'bg-[#111111] border-[#262626]' : 'bg-white border-[#E5E7EB] shadow-lg'
-        }`}>
-          {selectedNode ? (
-            <div className="space-y-5">
-              <div className="flex items-center justify-between border-b pb-3 border-[#262626]/40">
-                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#10B981] flex items-center gap-1.5">
-                  <Info className="w-3.5 h-3.5" /> Selected Node Details
-                </span>
-                <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
-                  NODE_TYPE_COLORS[selectedNode.type]?.bg || 'bg-emerald-500/20'
-                } ${NODE_TYPE_COLORS[selectedNode.type]?.text || 'text-emerald-400'}`}>
-                  {selectedNode.type}
-                </span>
-              </div>
-
-              <div>
-                <h3 className="font-heading font-bold text-lg leading-snug">{selectedNode.name}</h3>
-                <p className={`text-xs mt-1.5 leading-relaxed ${isDark ? 'text-[#B3B3B3]' : 'text-[#6B7280]'}`}>
-                  {selectedNode.description}
-                </p>
-              </div>
-
-              {/* Metrics Grid */}
-              <div className={`p-3.5 rounded-2xl border grid grid-cols-2 gap-3 text-center font-mono ${
-                isDark ? 'bg-[#171717] border-[#262626]' : 'bg-[#F9FAFB] border-[#E5E7EB]'
-              }`}>
-                <div>
-                  <span className="text-[9px] text-[#737373] uppercase block">Industry Demand</span>
-                  <span className="font-heading font-bold text-base text-[#10B981]">{selectedNode.demand}%</span>
-                </div>
-                <div>
-                  <span className="text-[9px] text-[#737373] uppercase block">Curriculum Coverage</span>
-                  <span className={`font-heading font-bold text-base ${
-                    selectedNode.coverage < 40 ? 'text-red-400' : 'text-emerald-400'
-                  }`}>
-                    {selectedNode.coverage}%
-                  </span>
-                </div>
-              </div>
-
-              {/* Connected Courses */}
-              <div className="space-y-1.5">
-                <span className="text-[10px] font-mono font-bold text-[#737373] uppercase block">Connected Courses:</span>
-                {selectedNode.coursesUsing && selectedNode.coursesUsing.length > 0 ? (
-                  <div className="space-y-1">
-                    {selectedNode.coursesUsing.map((c, idx) => (
-                      <div key={idx} className="p-2 rounded-xl bg-[#171717] border border-[#262626] text-xs font-semibold text-[#10B981] flex items-center justify-between">
-                        <span>{c}</span>
-                        <ChevronRight className="w-3.5 h-3.5" />
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <span className="text-xs text-red-400 italic block">No active course links mapped.</span>
-                )}
-              </div>
-
-              {/* 1-HOP NEIGHBOR HOPS & TRAVERSAL ENGINE */}
-              <div className="space-y-2 pt-2 border-t border-[#262626]/40">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-mono font-bold text-[#10B981] uppercase flex items-center gap-1">
-                    <BrainCircuit className="w-3.5 h-3.5" /> Direct Neighbor Hops ({currentNeighbors.length})
-                  </span>
-                  <span className="text-[9px] font-mono text-[#737373]">Click to Traverse</span>
-                </div>
-
-                <div className="space-y-1.5 max-h-[160px] overflow-y-auto pr-1 scrollbar-thin">
-                  {currentNeighbors.length > 0 ? (
-                    currentNeighbors.map(({ node: n, edge: e, direction }) => (
-                      <button
-                        key={n.id}
-                        onClick={() => traverseToNode(n.id)}
-                        className={`w-full p-2 rounded-xl border text-left transition-all flex items-center justify-between text-xs cursor-pointer ${
-                          isDark
-                            ? 'bg-[#171717] hover:bg-[#222222] border-[#262626] text-white hover:border-[#10B981]'
-                            : 'bg-[#F9FAFB] hover:bg-[#F0FDF4] border-[#E5E7EB] text-[#111827]'
-                        }`}
-                      >
-                        <div className="truncate pr-2">
-                          <div className="font-semibold text-[11px] truncate">{n.name}</div>
-                          <div className="text-[9px] font-mono text-[#737373]">
-                            {direction === 'outgoing' ? '➔ ' : '⬅ '}{e.label} ({n.type})
-                          </div>
-                        </div>
-                        <span className="px-2 py-1 rounded-lg bg-[#10B981]/20 text-[#10B981] text-[10px] font-bold font-mono whitespace-nowrap flex-shrink-0">
-                          Traverse ➔
-                        </span>
-                      </button>
-                    ))
-                  ) : (
-                    <span className="text-xs text-[#737373] italic">No direct neighbors found.</span>
-                  )}
-                </div>
-              </div>
-
-              {/* AI Recommendation */}
-              {selectedNode.aiRecommendation && (
-                <div className="p-3.5 rounded-2xl bg-[#10B981]/10 border border-[#10B981]/30 space-y-2 text-xs">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-[#10B981] flex items-center gap-1">
-                      <Sparkles className="w-3.5 h-3.5" /> AI Recommendation
-                    </span>
-                    <span className="text-[10px] font-mono text-[#10B981] font-bold">
-                      {selectedNode.confidence || 97}% Confidence
-                    </span>
-                  </div>
-                  <p className="text-white text-[11px] leading-relaxed">
-                    {selectedNode.aiRecommendation}
-                  </p>
-                </div>
-              )}
-
-              {/* Action Button */}
+            {searchQuery && (
               <button
-                onClick={() => onOpenWorkspace && onOpenWorkspace(selectedNode.coursesUsing?.[0] || 'CS-8042')}
-                className="w-full py-2.5 rounded-xl font-bold text-xs text-white bg-[#10B981] hover:bg-[#34D399] transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#10B981]/20 cursor-pointer"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2.5 top-2.5 p-0.5 rounded text-gray-400 hover:text-white"
               >
-                <span>Inject Fix into Syllabus</span>
-                <ArrowRight className="w-4 h-4" />
+                <X className="w-3.5 h-3.5" />
               </button>
-            </div>
-          ) : selectedEdge ? (
-            /* RELATIONSHIP INSPECTOR PANEL */
-            <div className="space-y-5">
-              <div className="flex items-center justify-between border-b pb-3 border-[#262626]/40">
-                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
-                  <GitMerge className="w-3.5 h-3.5" /> Relationship Inspector
-                </span>
-                <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/20 text-amber-400">
-                  {selectedEdge.type?.toUpperCase()}
-                </span>
-              </div>
+            )}
+          </div>
 
-              <div>
-                <span className="text-[10px] font-mono text-[#737373] uppercase block">Relationship Label</span>
-                <h3 className="font-heading font-bold text-lg text-emerald-400 mt-0.5">{selectedEdge.label}</h3>
-              </div>
+          {/* Filter Button */}
+          <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={() => setIsFilterOpen(true)}
+            className="px-3.5 py-2.5 rounded-[12px] text-xs font-semibold border flex items-center gap-2 cursor-pointer transition-colors"
+            style={{
+              backgroundColor: tokens.inputBg,
+              borderColor: tokens.border,
+              color: tokens.textSecondary,
+            }}
+          >
+            <Filter className="w-4 h-4" />
+            <span>Filters</span>
+          </motion.button>
 
-              <div className="p-3.5 rounded-2xl bg-[#171717] border border-[#262626] space-y-3 font-mono text-xs">
-                <div className="flex items-center justify-between">
-                  <span className="text-[#737373]">Source:</span>
-                  <span className="font-bold text-white">{selectedEdge.source}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-[#737373]">Target:</span>
-                  <span className="font-bold text-white">{selectedEdge.target}</span>
-                </div>
-              </div>
+          {/* Settings Icon Button */}
+          <button
+            className="p-2.5 rounded-[12px] border transition-colors cursor-pointer"
+            style={{
+              backgroundColor: tokens.inputBg,
+              borderColor: tokens.border,
+              color: tokens.textSecondary,
+            }}
+            title="Graph Settings"
+          >
+            <Settings className="w-4 h-4" />
+          </button>
 
-              {selectedEdge.evidence && (
-                <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 space-y-2 text-xs">
-                  <span className="font-bold text-amber-400 flex items-center gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5" /> Real-World Evidence
-                  </span>
-                  <p className="text-white text-[11px] leading-relaxed">
-                    {selectedEdge.evidence}
-                  </p>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-3">
-              <Network className="w-10 h-10 text-[#737373] animate-pulse" />
-              <span className="font-heading font-bold text-sm">Select Any Node or Relationship</span>
-              <p className={`text-xs ${isDark ? 'text-[#888888]' : 'text-[#6B7280]'}`}>
-                Click on any node in the canvas to inspect its syllabus depth, connected courses, and AI recommendation.
-              </p>
-            </div>
+          {/* Theme Toggle */}
+          {onToggleTheme && (
+            <ThemeToggle theme={theme} onToggleTheme={onToggleTheme} />
           )}
         </div>
       </div>
 
-      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-          4. CYPHER QUERY TERMINAL DRAWER
-         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <AnimatePresence>
-        {showCypherTerminal && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className={`p-6 rounded-[24px] border font-mono text-xs space-y-4 overflow-hidden ${
-              isDark ? 'bg-[#0D0D0D] border-[#10B981]/40' : 'bg-[#111827] text-white border-[#10B981]/40'
-            }`}
-          >
-            <div className="flex items-center justify-between border-b pb-3 border-[#262626]">
-              <div className="flex items-center gap-2 text-[#10B981] font-bold">
-                <Terminal className="w-4 h-4" />
-                <span>Neo4j Cypher Console & Graph Querying</span>
-              </div>
-              <button onClick={() => setShowCypherTerminal(false)} className="text-[#A3A3A3] hover:text-white">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
+      {/* 6 SUMMARY METRIC CARDS */}
+      <SummaryCards theme={theme} />
 
-            <div className="p-4 rounded-xl bg-[#000000] border border-[#262626] text-emerald-400 font-mono text-xs space-y-2">
-              <p className="text-[#737373]">// Query missing technology nodes connected to Machine Learning syllabus</p>
-              <p className="text-emerald-300">
-                MATCH (c:Course &#123;code: 'CS-8042'&#125;)-[:HAS_OUTCOME]-&gt;(co:Outcome)-[:REQUIRES]-&gt;(s:Skill)-[:USES_TECH]-&gt;(t:Technology)
-              </p>
-              <p className="text-emerald-300">
-                WHERE t.curriculumCoverage &lt; 30
-              </p>
-              <p className="text-emerald-300">
-                RETURN c.name, t.name, t.industryDemand ORDER BY t.industryDemand DESC LIMIT 5;
-              </p>
-            </div>
-
-            <div className="flex items-center justify-between text-[11px] text-[#A3A3A3]">
-              <span>Neo4j Instance: Bolt://neo4j.lumini.internal:7687 (Connected)</span>
-              <span className="text-[#10B981] font-bold">Query Execution Time: 4.2ms</span>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-          5. AI INSIGHTS & RELATIONSHIP PATH INSPECTOR
-         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+      {/* MAIN GRAPH AREA + RIGHT NODE DETAILS PANEL */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Left 8 Cols (or 9 Cols): Main Canvas Wrapper */}
+        <div className="lg:col-span-8 flex flex-col rounded-[18px] border overflow-hidden shadow-2xl relative"
+          style={{
+            backgroundColor: isDark ? '#111214' : '#FFFFFF',
+            borderColor: tokens.border,
+          }}
+        >
+          {/* Graph Toolbar */}
+          <GraphToolbar
+            theme={theme}
+            onZoomIn={handleZoomIn}
+            onZoomOut={handleZoomOut}
+            onFitGraph={handleFitGraph}
+            selectedView={selectedView}
+            onViewChange={setSelectedView}
+          />
 
-        {/* AI Insights Large Panel (7 Cols) */}
-        <div className={`lg:col-span-7 p-6 sm:p-8 rounded-[24px] border space-y-5 ${
-          isDark ? 'bg-[#111111] border-[#262626]' : 'bg-white border-[#E5E7EB] shadow-lg'
-        }`}>
-          <div className="flex items-center justify-between border-b pb-4 border-[#262626]/40">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-[#10B981] text-white flex items-center justify-center font-bold shadow-md shadow-[#10B981]/20">
-                <Sparkles className="w-4 h-4" />
+          {/* Interactive SVG / Canvas Area */}
+          <div className="relative w-full h-[620px] overflow-hidden select-none cursor-grab active:cursor-grabbing">
+            {/* Grid Pattern Background */}
+            <svg className="absolute inset-0 w-full h-full opacity-10 pointer-events-none">
+              <defs>
+                <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                  <path d="M 40 0 L 0 0 0 40" fill="none" stroke="currentColor" strokeWidth="1" />
+                </pattern>
+              </defs>
+              <rect width="100%" height="100%" fill="url(#grid)" />
+            </svg>
+
+            {/* Main Animated SVG Container */}
+            <div
+              className="w-full h-full transition-transform duration-100 ease-out origin-center"
+              style={{
+                transform: `scale(${zoomLevel}) translate(${panOffset.x}px, ${panOffset.y}px)`,
+              }}
+            >
+              <svg className="w-full h-full overflow-visible">
+                <defs>
+                  {/* Glowing Filter for Selected / Hovered Nodes */}
+                  <filter id="glow-green" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="6" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                  </filter>
+                </defs>
+
+                {/* 1. EDGES */}
+                <g className="edges">
+                  {visibleEdges.map((edge) => {
+                    const sourceNode = visibleNodes.find((n) => n.id === edge.source);
+                    const targetNode = visibleNodes.find((n) => n.id === edge.target);
+                    if (!sourceNode || !targetNode) return null;
+
+                    const edgeColor = EDGE_COLORS[edge.label] || '#64748B';
+                    const isHighlighted =
+                      selectedNodeId === sourceNode.id ||
+                      selectedNodeId === targetNode.id ||
+                      hoveredNodeId === sourceNode.id ||
+                      hoveredNodeId === targetNode.id;
+
+                    const midX = (sourceNode.x + targetNode.x) / 2;
+                    const midY = (sourceNode.y + targetNode.y) / 2;
+
+                    return (
+                      <g key={edge.id} className="transition-opacity duration-300">
+                        <line
+                          x1={sourceNode.x}
+                          y1={sourceNode.y}
+                          x2={targetNode.x}
+                          y2={targetNode.y}
+                          stroke={edgeColor}
+                          strokeWidth={isHighlighted ? 2.5 : 1.5}
+                          strokeOpacity={isHighlighted ? 0.9 : 0.4}
+                          strokeDasharray={edge.label === 'USES_TECHNOLOGY' ? '4 4' : 'none'}
+                        />
+                        {/* Edge Label (visible at normal zoom) */}
+                        {zoomLevel >= 0.8 && (
+                          <text
+                            x={midX}
+                            y={midY - 4}
+                            textAnchor="middle"
+                            fill={edgeColor}
+                            fontSize="9"
+                            fontWeight="bold"
+                            className="font-mono pointer-events-none opacity-80"
+                          >
+                            {edge.label}
+                          </text>
+                        )}
+                      </g>
+                    );
+                  })}
+                </g>
+
+                {/* 2. NODES */}
+                <g className="nodes">
+                  {visibleNodes.map((node) => {
+                    const styleConfig = CATEGORY_COLORS[node.category] || CATEGORY_COLORS.Course;
+                    const isSelected = selectedNodeId === node.id;
+                    const isHovered = hoveredNodeId === node.id;
+
+                    return (
+                      <g
+                        key={node.id}
+                        transform={`translate(${node.x}, ${node.y})`}
+                        onClick={() => setSelectedNodeId(node.id)}
+                        onMouseDown={(e) => handleNodeMouseDown(e, node.id)}
+                        onMouseEnter={() => setHoveredNodeId(node.id)}
+                        onMouseLeave={() => setHoveredNodeId(null)}
+                        className="cursor-pointer group"
+                      >
+                        {/* Soft Outer Glow Circle */}
+                        <circle
+                          r={isSelected ? 32 : isHovered ? 28 : 24}
+                          fill={styleConfig.hex}
+                          fillOpacity={isSelected ? 0.35 : isHovered ? 0.25 : 0.15}
+                          stroke={styleConfig.hex}
+                          strokeWidth={isSelected ? 2.5 : 1.5}
+                          strokeOpacity={isSelected ? 1 : 0.6}
+                          className="transition-all duration-200"
+                        />
+
+                        {/* Center Icon Indicator */}
+                        <circle
+                          r={isSelected ? 18 : 15}
+                          fill={isDark ? '#111214' : '#FFFFFF'}
+                          stroke={styleConfig.hex}
+                          strokeWidth="2"
+                        />
+
+                        {/* Node Label Text */}
+                        <text
+                          y={36}
+                          textAnchor="middle"
+                          fill={isDark ? '#FFFFFF' : '#111827'}
+                          fontSize="11"
+                          fontWeight={isSelected ? 'bold' : '600'}
+                          className="pointer-events-none tracking-tight transition-colors"
+                        >
+                          {node.name}
+                        </text>
+
+                        {/* Demand percentage badge for Market Demand nodes */}
+                        {node.demandPercent && (
+                          <text
+                            y={50}
+                            textAnchor="middle"
+                            fill="#EF4444"
+                            fontSize="9"
+                            fontWeight="bold"
+                            className="font-mono pointer-events-none"
+                          >
+                            {node.demandPercent}
+                          </text>
+                        )}
+                      </g>
+                    );
+                  })}
+                </g>
+              </svg>
+            </div>
+
+            {/* GRAPH MINI MAP (Bottom Left) */}
+            <div
+              className="absolute bottom-4 left-4 p-2 rounded-xl border flex flex-col items-center gap-2 shadow-lg backdrop-blur-md z-20"
+              style={{
+                backgroundColor: isDark ? 'rgba(17, 18, 20, 0.85)' : 'rgba(255, 255, 255, 0.9)',
+                borderColor: tokens.border,
+              }}
+            >
+              <div className="w-24 h-16 rounded-lg border bg-black/40 relative overflow-hidden flex items-center justify-center">
+                <div className="w-8 h-6 border border-[#43D854] rounded bg-[#43D854]/20 animate-pulse" />
               </div>
-              <div>
-                <h2 className="font-heading font-bold text-lg sm:text-xl tracking-tight">
-                  Graph Topology AI Insights
-                </h2>
-                <p className={`text-xs ${isDark ? 'text-[#B3B3B3]' : 'text-[#6B7280]'}`}>
-                  Automated structural pattern recognition across syllabus graph dependencies.
-                </p>
+              <div className="flex items-center gap-1">
+                <button onClick={handleZoomIn} className="p-1 text-gray-400 hover:text-white">
+                  <Plus className="w-3 h-3" />
+                </button>
+                <button onClick={handleZoomOut} className="p-1 text-gray-400 hover:text-white">
+                  <Minus className="w-3 h-3" />
+                </button>
+                <button onClick={handleFitGraph} className="p-1 text-gray-400 hover:text-white">
+                  <Lock className="w-3 h-3" />
+                </button>
               </div>
             </div>
-            <span className="text-xs font-mono font-bold text-[#10B981] bg-[#10B981]/15 px-3 py-1 rounded-full">
-              5 Key Insights
-            </span>
-          </div>
-
-          <div className="space-y-3">
-            {[
-              {
-                title: 'Prompt Engineering has no curriculum dependency.',
-                desc: 'Prompt Engineering appears in 78% of GenAI job postings but has 0 outgoing dependencies in CS-8042.',
-                status: 'Missing Link',
-                color: 'text-red-400'
-              },
-              {
-                title: 'Vector Databases connect to 6 AI courses.',
-                desc: 'Milvus & pgvector serve as central hub nodes for CS-8042, CS-4080, and CS-5090.',
-                status: 'Hub Node',
-                color: 'text-[#10B981]'
-              },
-              {
-                title: 'Docker should connect to Operating Systems (CS-3010).',
-                desc: 'Adding containerization to OS elevates kernel scheduling comprehension by +24%.',
-                status: 'Suggested Edge',
-                color: 'text-amber-400'
-              },
-              {
-                title: 'Cybersecurity lacks Cloud Security skills.',
-                desc: 'CS-2020 lacks zero-trust IAM policy modules required for cloud defense roles.',
-                status: 'Curriculum Deficit',
-                color: 'text-red-400'
-              },
-              {
-                title: 'AI Agents appear in 41% of modern AI roles.',
-                desc: 'LangGraph & agent swarms are missing from 100% of undergraduate courses.',
-                status: 'Emerging Skill',
-                color: 'text-purple-400'
-              }
-            ].map((insight, idx) => (
-              <div
-                key={idx}
-                className={`p-4 rounded-2xl border flex items-start justify-between gap-4 ${
-                  isDark ? 'bg-[#171717] border-[#262626]' : 'bg-[#F9FAFB] border-[#E5E7EB]'
-                }`}
-              >
-                <div className="space-y-1">
-                  <h4 className={`font-heading font-bold text-sm ${insight.color}`}>{insight.title}</h4>
-                  <p className={`text-xs leading-relaxed ${isDark ? 'text-[#B3B3B3]' : 'text-[#6B7280]'}`}>
-                    {insight.desc}
-                  </p>
-                </div>
-                <span className="text-[10px] font-mono font-bold px-2.5 py-1 rounded-lg bg-[#10B981]/15 text-[#10B981] flex-shrink-0">
-                  {insight.status}
-                </span>
-              </div>
-            ))}
           </div>
         </div>
 
-        {/* Industry Impact & Top Technologies (5 Cols) */}
-        <div className={`lg:col-span-5 p-6 sm:p-8 rounded-[24px] border space-y-5 ${
-          isDark ? 'bg-[#111111] border-[#262626]' : 'bg-white border-[#E5E7EB] shadow-lg'
-        }`}>
-          <div className="flex items-center justify-between border-b pb-4 border-[#262626]/40">
-            <div>
-              <h2 className="font-heading font-bold text-lg sm:text-xl tracking-tight flex items-center gap-2">
-                <Globe className="w-5 h-5 text-[#10B981]" />
-                <span>Industry Impact Technologies</span>
-              </h2>
-              <p className={`text-xs mt-1 ${isDark ? 'text-[#B3B3B3]' : 'text-[#6B7280]'}`}>
-                Top hiring technologies extracted from Neo4j graph nodes.
-              </p>
-            </div>
-            <span className="text-xs font-mono text-[#10B981] font-bold">
-              2026 Demand Index
-            </span>
-          </div>
-
-          <div className="space-y-3 max-h-[360px] overflow-y-auto pr-1 scrollbar-thin">
-            {[
-              { name: 'Model Context Protocol (MCP)', demand: 98, growth: '+340%', course: 'CS-8042', status: 'Missing' },
-              { name: 'LangGraph Multi-Agent', demand: 95, growth: '+250%', course: 'CS-8042', status: 'Missing' },
-              { name: 'Vector Databases (Milvus/pgvector)', demand: 94, growth: '+195%', course: 'CS-4080', status: 'Partial' },
-              { name: 'Docker & OCI Containers', demand: 92, growth: '+120%', course: 'CS-5090', status: 'Partial' },
-              { name: 'Kubernetes Orchestration', demand: 90, growth: '+145%', course: 'CS-5090', status: 'Missing' },
-              { name: 'vLLM Serving Engine', demand: 88, growth: '+210%', course: 'CS-8042', status: 'Missing' }
-            ].map((tech, idx) => (
-              <div
-                key={idx}
-                className={`p-3.5 rounded-2xl border flex items-center justify-between gap-3 ${
-                  isDark ? 'bg-[#171717] border-[#262626]' : 'bg-[#F9FAFB] border-[#E5E7EB]'
-                }`}
-              >
-                <div>
-                  <h4 className="font-heading font-bold text-xs">{tech.name}</h4>
-                  <span className="text-[10px] font-mono text-[#737373]">Target: {tech.course}</span>
-                </div>
-
-                <div className="flex items-center gap-3 font-mono text-xs">
-                  <span className="text-emerald-400 font-bold">{tech.growth}</span>
-                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                    tech.status === 'Missing' ? 'bg-red-500/20 text-red-400' : 'bg-amber-500/20 text-amber-400'
-                  }`}>
-                    {tech.status}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
+        {/* Right 4 Cols: Node Details Panel */}
+        <div className="lg:col-span-4">
+          <NodeDetailsPanel
+            theme={theme}
+            node={selectedNode}
+            onSelectRelatedNode={(nodeName) => {
+              const matched = nodes.find((n) => n.name.toLowerCase().includes(nodeName.toLowerCase()));
+              if (matched) setSelectedNodeId(matched.id);
+            }}
+          />
         </div>
       </div>
 
-      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-          6. BOTTOM PANEL: EXECUTIVE AI SUMMARY
-         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <div className={`p-6 sm:p-8 rounded-[24px] border space-y-4 ${
-        isDark ? 'bg-gradient-to-br from-[#111111] via-[#141414] to-[#0A1A14] border-[#10B981]/30' : 'bg-gradient-to-br from-white via-emerald-50/20 to-emerald-100/30 border-[#10B981]/30 shadow-lg'
-      }`}>
-        <div className="flex items-center gap-3 border-b pb-3 border-[#262626]/40">
-          <div className="w-8 h-8 rounded-xl bg-[#10B981] text-white flex items-center justify-center font-bold">
-            <BrainCircuit className="w-4 h-4" strokeWidth={2.5} />
-          </div>
-          <div>
-            <h3 className="font-heading font-bold text-base">Executive Neo4j Ontological Summary</h3>
-            <p className={`text-xs ${isDark ? 'text-[#A3A3A3]' : 'text-[#6B7280]'}`}>
-              Synthesized by Lumini Graph Engine for Academic Deans & Committee Chairs
-            </p>
-          </div>
-        </div>
-
-        <p className={`text-xs sm:text-sm leading-relaxed font-sans ${isDark ? 'text-[#D4D4D4]' : 'text-[#374151]'}`}>
-          The current curriculum graph contains <strong>194 mapped skills</strong> across 82 course modules. However, <strong>28 emerging skills</strong> (including Model Context Protocol, LangGraph, and Vector Search) remain disconnected from existing syllabi. Computer Engineering demonstrates the strongest alignment at 88%, whereas Mechanical and Civil Engineering require higher modernization efforts. Adding Docker, Kubernetes, and Vector Databases to CS-3010 and CS-8042 will improve overall institutional alignment by approximately <strong>14.2%</strong>.
-        </p>
-
-        <div className="flex flex-wrap items-center justify-between gap-4 pt-2 font-mono text-xs">
-          <div className="flex items-center gap-4">
-            <span className="text-[#10B981] font-bold">✓ ABET Criterion 3 Compliant</span>
-            <span className="text-emerald-400 font-bold">✓ Tier-1 Benchmark Verified</span>
-          </div>
-
-          <button
-            onClick={() => onOpenWorkspace && onOpenWorkspace('CS-8042')}
-            className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#10B981] hover:bg-[#34D399] transition-all flex items-center gap-1.5 cursor-pointer shadow-md shadow-[#10B981]/20"
-          >
-            <span>Launch Modernization Workspace</span>
-            <ArrowRight className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-
+      {/* FILTER DRAWER */}
+      <FilterDrawer
+        theme={theme}
+        isOpen={isFilterOpen}
+        onClose={() => setIsFilterOpen(false)}
+        onApplyFilters={setActiveCategories}
+      />
     </div>
   );
 };
