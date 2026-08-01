@@ -1,21 +1,21 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  GraduationCap, 
-  ArrowLeft, 
-  Sun, 
-  Moon, 
-  CheckCircle2, 
-  ShieldCheck, 
-  Lock, 
-  Mail, 
-  Eye, 
-  EyeOff, 
-  User, 
-  Building2, 
-  Briefcase, 
-  ArrowRight, 
-  Loader2, 
+import {
+  GraduationCap,
+  ArrowLeft,
+  Sun,
+  Moon,
+  CheckCircle2,
+  ShieldCheck,
+  Lock,
+  Mail,
+  Eye,
+  EyeOff,
+  User,
+  Building2,
+  Briefcase,
+  ArrowRight,
+  Loader2,
   AlertCircle,
   KeyRound,
   Building,
@@ -33,6 +33,7 @@ import { EmailVerificationView } from './auth/EmailVerificationView';
 import { ForgotPasswordView } from './auth/ForgotPasswordView';
 import { ResetPasswordView } from './auth/ResetPasswordView';
 import { SessionManager } from './auth/SessionManager';
+import { supabase } from '../lib/supabase';
 
 export type AuthTab = 'signIn' | 'signUp' | 'forgotPassword' | 'verification';
 
@@ -85,7 +86,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
   const [formSuccess, setFormSuccess] = useState<string | null>(null);
 
   // Handler for Sign In
-  const handleSignIn = (e: React.FormEvent) => {
+  const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
     setFormSuccess(null);
@@ -95,29 +96,65 @@ export const AuthPage: React.FC<AuthPageProps> = ({
       return;
     }
 
+    console.log("[Auth] Attempting Sign In for:", signInEmail);
     setIsLoading(true);
-    setTimeout(() => {
+
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: signInEmail,
+        password: signInPassword,
+      });
+
+      console.log("[Auth] Sign In Response:", { data, error });
+
+      if (error) {
+        setFormError(error.message);
+      } else if (data.user && !data.user.email_confirmed_at) {
+        console.warn("[Auth] Email not confirmed for user:", data.user.id);
+        await supabase.auth.signOut();
+        setFormError("Please verify your email before logging in.");
+      } else {
+        console.log("[Auth] Sign In Successful!");
+        setCurrentStep('institutionSelection');
+      }
+    } catch (err: any) {
+      console.error("[Auth] Sign In Exception:", err);
+      setFormError(err.message || 'An unexpected error occurred during sign in.');
+    } finally {
       setIsLoading(false);
-      // Navigate to Institution Selection after successful login
-      setCurrentStep('institutionSelection');
-    }, 1000);
+    }
   };
 
   // Handler for SSO Login (Google / Microsoft)
-  const handleSSOLogin = (provider: 'Google' | 'Microsoft') => {
+  const handleSSOLogin = async (provider: 'Google' | 'Microsoft') => {
     setFormError(null);
     setIsLoading(true);
-    setTimeout(() => {
+    console.log(`[Auth] Attempting OAuth login with: ${provider}`);
+
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: provider === 'Google' ? 'google' : 'azure',
+        options: {
+          redirectTo: window.location.origin,
+        }
+      });
+
+      console.log(`[Auth] OAuth Response for ${provider}:`, { data, error });
+
+      if (error) {
+        setFormError(error.message);
+      }
+    } catch (err: any) {
+      console.error(`[Auth] OAuth Exception for ${provider}:`, err);
+      setFormError(err.message || 'An unexpected error occurred during SSO login.');
+    } finally {
+      // If OAuth works, it redirects the page, so this only matters on error
       setIsLoading(false);
-      setFormSuccess(`Authenticated via ${provider} Workspace SSO!`);
-      setTimeout(() => {
-        setCurrentStep('institutionSelection');
-      }, 600);
-    }, 1000);
+    }
   };
 
   // Handler for Register Step 1 -> Role Selection or Verification
-  const handleRegisterSubmit = (e: React.FormEvent) => {
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
 
@@ -136,12 +173,38 @@ export const AuthPage: React.FC<AuthPageProps> = ({
       return;
     }
 
+    console.log("[Auth] Attempting Registration for:", signUpUniversityEmail);
     setIsLoading(true);
-    setTimeout(() => {
+
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: signUpUniversityEmail,
+        password: signUpPassword,
+        options: {
+          data: {
+            full_name: signUpFullName,
+            institution_name: signUpInstitutionName,
+            department: signUpDepartment,
+            role: signUpRole
+          }
+        }
+      });
+
+      console.log("[Auth] Registration Response:", { data, error });
+
+      if (error) {
+        setFormError(error.message);
+      } else {
+        console.log("[Auth] Registration Successful!");
+        // Move to Role Selection or Verification
+        setCurrentStep('roleSelection');
+      }
+    } catch (err: any) {
+      console.error("[Auth] Registration Exception:", err);
+      setFormError(err.message || 'An unexpected error occurred during registration.');
+    } finally {
       setIsLoading(false);
-      // Move to Role Selection or Verification
-      setCurrentStep('roleSelection');
-    }, 1000);
+    }
   };
 
   // Handler for Role Confirmation
@@ -166,23 +229,20 @@ export const AuthPage: React.FC<AuthPageProps> = ({
   };
 
   return (
-    <div className={`min-h-screen w-full flex flex-col font-sans transition-colors duration-300 ${
-      isDark ? 'bg-[#0A0A0A] text-[#FAFAFA]' : 'bg-[#FAFAFA] text-[#111827]'
-    }`}>
-      
-      {/* Top Header Navigation */}
-      <header className={`w-full h-18 border-b px-4 sm:px-8 flex items-center justify-between z-30 transition-colors backdrop-blur-md sticky top-0 ${
-        isDark ? 'bg-[#0A0A0A]/90 border-[#262626]' : 'bg-[#FFFFFF]/90 border-[#E5E7EB]'
+    <div className={`min-h-screen w-full flex flex-col font-sans transition-colors duration-300 ${isDark ? 'bg-[#0A0A0A] text-[#FAFAFA]' : 'bg-[#FAFAFA] text-[#111827]'
       }`}>
+
+      {/* Top Header Navigation */}
+      <header className={`w-full h-18 border-b px-4 sm:px-8 flex items-center justify-between z-30 transition-colors backdrop-blur-md sticky top-0 ${isDark ? 'bg-[#0A0A0A]/90 border-[#262626]' : 'bg-[#FFFFFF]/90 border-[#E5E7EB]'
+        }`}>
         {/* Brand Logo & Back */}
         <div className="flex items-center gap-4">
           <button
             onClick={onBackToHome}
-            className={`flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-xl border transition-all cursor-pointer ${
-              isDark 
-                ? 'bg-[#111111] border-[#262626] text-[#B3B3B3] hover:text-[#FAFAFA] hover:bg-[#171717]' 
+            className={`flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-xl border transition-all cursor-pointer ${isDark
+                ? 'bg-[#111111] border-[#262626] text-[#B3B3B3] hover:text-[#FAFAFA] hover:bg-[#171717]'
                 : 'bg-[#F8FAFC] border-[#E5E7EB] text-[#6B7280] hover:text-[#111827] hover:bg-[#F3F4F6]'
-            }`}
+              }`}
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Back to Home</span>
@@ -192,9 +252,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({
 
           <a href="#" onClick={onBackToHome} className="flex items-center gap-2.5 group">
             <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#10B981] to-[#34D399] p-0.5 shadow-sm group-hover:scale-105 transition-transform">
-              <div className={`w-full h-full rounded-[10px] flex items-center justify-center ${
-                isDark ? 'bg-[#0A0A0A]' : 'bg-[#FFFFFF]'
-              }`}>
+              <div className={`w-full h-full rounded-[10px] flex items-center justify-center ${isDark ? 'bg-[#0A0A0A]' : 'bg-[#FFFFFF]'
+                }`}>
                 <GraduationCap className="w-4 h-4 text-[#10B981]" />
               </div>
             </div>
@@ -207,9 +266,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({
           <button
             type="button"
             onClick={() => setShowSessionsModal(!showSessionsModal)}
-            className={`hidden md:flex items-center gap-2 text-xs font-mono px-3 py-1.5 rounded-full border transition-all cursor-pointer ${
-              isDark ? 'bg-[#111111] border-[#262626] text-[#10B981] hover:border-[#10B981]' : 'bg-[#F0FDF4] border-[#BBF7D0] text-[#059669] hover:border-[#10B981]'
-            }`}
+            className={`hidden md:flex items-center gap-2 text-xs font-mono px-3 py-1.5 rounded-full border transition-all cursor-pointer ${isDark ? 'bg-[#111111] border-[#262626] text-[#10B981] hover:border-[#10B981]' : 'bg-[#F0FDF4] border-[#BBF7D0] text-[#059669] hover:border-[#10B981]'
+              }`}
           >
             <ShieldCheck className="w-3.5 h-3.5" />
             <span>SOC2 TYPE II · FERPA COMPLIANT</span>
@@ -218,11 +276,10 @@ export const AuthPage: React.FC<AuthPageProps> = ({
           <button
             onClick={onToggleTheme}
             aria-label="Toggle Theme"
-            className={`p-2 rounded-xl border transition-all cursor-pointer ${
-              isDark
+            className={`p-2 rounded-xl border transition-all cursor-pointer ${isDark
                 ? 'bg-[#111111] border-[#262626] text-[#B3B3B3] hover:text-[#FAFAFA]'
                 : 'bg-[#F8FAFC] border-[#E5E7EB] text-[#6B7280] hover:text-[#111827]'
-            }`}
+              }`}
           >
             {isDark ? <Sun className="w-4 h-4 text-[#34D399]" /> : <Moon className="w-4 h-4 text-[#111827]" />}
           </button>
@@ -231,7 +288,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
 
       {/* Main Split Screen Container */}
       <div className="flex-1 w-full max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-12 overflow-hidden">
-        
+
         {/* LEFT PANEL: Marketing & Enterprise Illustration (5 Columns) */}
         <div className="lg:col-span-5">
           <AuthLeftPanel theme={theme} />
@@ -239,38 +296,34 @@ export const AuthPage: React.FC<AuthPageProps> = ({
 
         {/* RIGHT PANEL: Authentication Form Container (7 Columns) */}
         <div className="lg:col-span-7 p-6 sm:p-10 lg:p-12 xl:p-16 flex items-center justify-center relative">
-          
+
           <div className="w-full max-w-lg space-y-6">
-            
+
             {/* Glass Card Container (Rounded 22px, minimal border, soft shadow) */}
-            <div className={`rounded-[22px] border shadow-2xl p-6 sm:p-8 relative transition-all ${
-              isDark ? 'bg-[#111111] border-[#262626]' : 'bg-[#FFFFFF] border-[#E5E7EB]'
-            }`}>
-              
+            <div className={`rounded-[22px] border shadow-2xl p-6 sm:p-8 relative transition-all ${isDark ? 'bg-[#111111] border-[#262626]' : 'bg-[#FFFFFF] border-[#E5E7EB]'
+              }`}>
+
               {/* Primary Tabs (Sign In / Register) for main entry views */}
               {(currentStep === 'signIn' || currentStep === 'signUp') && (
-                <div className={`p-1 rounded-xl border flex items-center mb-6 ${
-                  isDark ? 'bg-[#0A0A0A] border-[#262626]' : 'bg-[#F1F5F9] border-[#E2E8F0]'
-                }`}>
+                <div className={`p-1 rounded-xl border flex items-center mb-6 ${isDark ? 'bg-[#0A0A0A] border-[#262626]' : 'bg-[#F1F5F9] border-[#E2E8F0]'
+                  }`}>
                   <button
                     type="button"
                     onClick={() => { setCurrentStep('signIn'); setFormError(null); setFormSuccess(null); }}
-                    className={`flex-1 py-2.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-                      currentStep === 'signIn'
+                    className={`flex-1 py-2.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${currentStep === 'signIn'
                         ? 'bg-[#10B981] text-white shadow-md'
                         : isDark ? 'text-[#888888] hover:text-[#FAFAFA]' : 'text-[#6B7280] hover:text-[#111827]'
-                    }`}
+                      }`}
                   >
                     Sign In
                   </button>
                   <button
                     type="button"
                     onClick={() => { setCurrentStep('signUp'); setFormError(null); setFormSuccess(null); }}
-                    className={`flex-1 py-2.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-                      currentStep === 'signUp'
+                    className={`flex-1 py-2.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${currentStep === 'signUp'
                         ? 'bg-[#10B981] text-white shadow-md'
                         : isDark ? 'text-[#888888] hover:text-[#FAFAFA]' : 'text-[#6B7280] hover:text-[#111827]'
-                    }`}
+                      }`}
                   >
                     Register Institution
                   </button>
@@ -306,11 +359,11 @@ export const AuthPage: React.FC<AuthPageProps> = ({
 
               {/* VIEW 1: SIGN IN FORM */}
               {currentStep === 'signIn' && (
-                <motion.form 
+                <motion.form
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.2 }}
-                  onSubmit={handleSignIn} 
+                  onSubmit={handleSignIn}
                   className="space-y-4"
                 >
                   <div className="space-y-1 mb-2">
@@ -333,11 +386,10 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                         value={signInEmail}
                         onChange={(e) => setSignInEmail(e.target.value)}
                         placeholder="professor@stanford.edu / dean@mit.edu"
-                        className={`w-full text-xs font-medium pl-10 pr-4 py-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-[#10B981] transition-all ${
-                          isDark 
-                            ? 'bg-[#0A0A0A] border-[#262626] text-[#FAFAFA] placeholder-[#525252]' 
+                        className={`w-full text-xs font-medium pl-10 pr-4 py-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-[#10B981] transition-all ${isDark
+                            ? 'bg-[#0A0A0A] border-[#262626] text-[#FAFAFA] placeholder-[#525252]'
                             : 'bg-[#F8FAFC] border-[#E5E7EB] text-[#111827] placeholder-[#9CA3AF]'
-                        }`}
+                          }`}
                       />
                     </div>
                   </div>
@@ -364,11 +416,10 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                         value={signInPassword}
                         onChange={(e) => setSignInPassword(e.target.value)}
                         placeholder="••••••••••••"
-                        className={`w-full text-xs font-medium pl-10 pr-10 py-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-[#10B981] transition-all ${
-                          isDark 
-                            ? 'bg-[#0A0A0A] border-[#262626] text-[#FAFAFA] placeholder-[#525252]' 
+                        className={`w-full text-xs font-medium pl-10 pr-10 py-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-[#10B981] transition-all ${isDark
+                            ? 'bg-[#0A0A0A] border-[#262626] text-[#FAFAFA] placeholder-[#525252]'
                             : 'bg-[#F8FAFC] border-[#E5E7EB] text-[#111827] placeholder-[#9CA3AF]'
-                        }`}
+                          }`}
                       />
                       <button
                         type="button"
@@ -428,9 +479,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                   {/* SSO Divider */}
                   <div className="relative my-4 flex items-center justify-center">
                     <div className={`w-full border-t ${isDark ? 'border-[#262626]' : 'border-[#E5E7EB]'}`} />
-                    <span className={`absolute px-3 text-[10px] font-mono uppercase tracking-wider ${
-                      isDark ? 'bg-[#111111] text-[#737373]' : 'bg-[#FFFFFF] text-[#9CA3AF]'
-                    }`}>
+                    <span className={`absolute px-3 text-[10px] font-mono uppercase tracking-wider ${isDark ? 'bg-[#111111] text-[#737373]' : 'bg-[#FFFFFF] text-[#9CA3AF]'
+                      }`}>
                       OR
                     </span>
                   </div>
@@ -440,11 +490,10 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                     <button
                       type="button"
                       onClick={() => handleSSOLogin('Google')}
-                      className={`py-2.5 px-3 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                        isDark 
-                          ? 'bg-[#0A0A0A] border-[#262626] text-[#FAFAFA] hover:bg-[#171717]' 
+                      className={`py-2.5 px-3 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer ${isDark
+                          ? 'bg-[#0A0A0A] border-[#262626] text-[#FAFAFA] hover:bg-[#171717]'
                           : 'bg-[#F8FAFC] border-[#E5E7EB] text-[#111827] hover:bg-[#F3F4F6]'
-                      }`}
+                        }`}
                     >
                       <svg className="w-4 h-4" viewBox="0 0 24 24">
                         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -458,17 +507,16 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                     <button
                       type="button"
                       onClick={() => handleSSOLogin('Microsoft')}
-                      className={`py-2.5 px-3 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                        isDark 
-                          ? 'bg-[#0A0A0A] border-[#262626] text-[#FAFAFA] hover:bg-[#171717]' 
+                      className={`py-2.5 px-3 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer ${isDark
+                          ? 'bg-[#0A0A0A] border-[#262626] text-[#FAFAFA] hover:bg-[#171717]'
                           : 'bg-[#F8FAFC] border-[#E5E7EB] text-[#111827] hover:bg-[#F3F4F6]'
-                      }`}
+                        }`}
                     >
                       <svg className="w-4 h-4" viewBox="0 0 23 23">
-                        <path fill="#f35325" d="M1 1h10v10H1z"/>
-                        <path fill="#81bc06" d="M12 1h10v10H12z"/>
-                        <path fill="#05a6f0" d="M1 12h10v10H1z"/>
-                        <path fill="#ffba08" d="M12 12h10v10H12z"/>
+                        <path fill="#f35325" d="M1 1h10v10H1z" />
+                        <path fill="#81bc06" d="M12 1h10v10H12z" />
+                        <path fill="#05a6f0" d="M1 12h10v10H1z" />
+                        <path fill="#ffba08" d="M12 12h10v10H12z" />
                       </svg>
                       <span>Continue with Microsoft</span>
                     </button>
@@ -491,11 +539,11 @@ export const AuthPage: React.FC<AuthPageProps> = ({
 
               {/* VIEW 2: REGISTER INSTITUTION FORM */}
               {currentStep === 'signUp' && (
-                <motion.form 
+                <motion.form
                   initial={{ opacity: 0, x: 10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.2 }}
-                  onSubmit={handleRegisterSubmit} 
+                  onSubmit={handleRegisterSubmit}
                   className="space-y-3.5"
                 >
                   <div className="space-y-1 mb-2">
@@ -518,9 +566,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                         value={signUpInstitutionName}
                         onChange={(e) => setSignUpInstitutionName(e.target.value)}
                         placeholder="e.g. Stanford University / NIT Surat / Harvard"
-                        className={`w-full text-xs font-medium pl-10 pr-4 py-2.5 rounded-xl border focus:outline-none focus:ring-2 focus:ring-[#10B981] ${
-                          isDark ? 'bg-[#0A0A0A] border-[#262626] text-[#FAFAFA] placeholder-[#525252]' : 'bg-[#F8FAFC] border-[#E5E7EB] text-[#111827] placeholder-[#9CA3AF]'
-                        }`}
+                        className={`w-full text-xs font-medium pl-10 pr-4 py-2.5 rounded-xl border focus:outline-none focus:ring-2 focus:ring-[#10B981] ${isDark ? 'bg-[#0A0A0A] border-[#262626] text-[#FAFAFA] placeholder-[#525252]' : 'bg-[#F8FAFC] border-[#E5E7EB] text-[#111827] placeholder-[#9CA3AF]'
+                          }`}
                       />
                     </div>
                   </div>
@@ -539,9 +586,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                           value={signUpUniversityEmail}
                           onChange={(e) => setSignUpUniversityEmail(e.target.value)}
                           placeholder="faculty@stanford.edu"
-                          className={`w-full text-xs font-medium pl-9 pr-3 py-2.5 rounded-xl border focus:outline-none focus:ring-2 focus:ring-[#10B981] ${
-                            isDark ? 'bg-[#0A0A0A] border-[#262626] text-[#FAFAFA] placeholder-[#525252]' : 'bg-[#F8FAFC] border-[#E5E7EB] text-[#111827] placeholder-[#9CA3AF]'
-                          }`}
+                          className={`w-full text-xs font-medium pl-9 pr-3 py-2.5 rounded-xl border focus:outline-none focus:ring-2 focus:ring-[#10B981] ${isDark ? 'bg-[#0A0A0A] border-[#262626] text-[#FAFAFA] placeholder-[#525252]' : 'bg-[#F8FAFC] border-[#E5E7EB] text-[#111827] placeholder-[#9CA3AF]'
+                            }`}
                         />
                       </div>
                     </div>
@@ -558,9 +604,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                           value={signUpFullName}
                           onChange={(e) => setSignUpFullName(e.target.value)}
                           placeholder="Dr. Eleanor Vance"
-                          className={`w-full text-xs font-medium pl-9 pr-3 py-2.5 rounded-xl border focus:outline-none focus:ring-2 focus:ring-[#10B981] ${
-                            isDark ? 'bg-[#0A0A0A] border-[#262626] text-[#FAFAFA] placeholder-[#525252]' : 'bg-[#F8FAFC] border-[#E5E7EB] text-[#111827] placeholder-[#9CA3AF]'
-                          }`}
+                          className={`w-full text-xs font-medium pl-9 pr-3 py-2.5 rounded-xl border focus:outline-none focus:ring-2 focus:ring-[#10B981] ${isDark ? 'bg-[#0A0A0A] border-[#262626] text-[#FAFAFA] placeholder-[#525252]' : 'bg-[#F8FAFC] border-[#E5E7EB] text-[#111827] placeholder-[#9CA3AF]'
+                            }`}
                         />
                       </div>
                     </div>
@@ -577,11 +622,10 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                           key={role}
                           type="button"
                           onClick={() => setSignUpRole(role)}
-                          className={`py-2 px-2.5 rounded-lg border text-[11px] font-semibold text-center transition-all ${
-                            signUpRole === role
+                          className={`py-2 px-2.5 rounded-lg border text-[11px] font-semibold text-center transition-all ${signUpRole === role
                               ? 'bg-[#10B981] text-white border-[#10B981] shadow-sm'
                               : isDark ? 'bg-[#0A0A0A] border-[#262626] text-[#A3A3A3] hover:text-[#FAFAFA]' : 'bg-[#F8FAFC] border-[#E5E7EB] text-[#6B7280] hover:text-[#111827]'
-                          }`}
+                            }`}
                         >
                           {role}
                         </button>
@@ -602,9 +646,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                         value={signUpDepartment}
                         onChange={(e) => setSignUpDepartment(e.target.value)}
                         placeholder="e.g. Electrical Engineering & Computer Science"
-                        className={`w-full text-xs font-medium pl-10 pr-4 py-2.5 rounded-xl border focus:outline-none focus:ring-2 focus:ring-[#10B981] ${
-                          isDark ? 'bg-[#0A0A0A] border-[#262626] text-[#FAFAFA] placeholder-[#525252]' : 'bg-[#F8FAFC] border-[#E5E7EB] text-[#111827] placeholder-[#9CA3AF]'
-                        }`}
+                        className={`w-full text-xs font-medium pl-10 pr-4 py-2.5 rounded-xl border focus:outline-none focus:ring-2 focus:ring-[#10B981] ${isDark ? 'bg-[#0A0A0A] border-[#262626] text-[#FAFAFA] placeholder-[#525252]' : 'bg-[#F8FAFC] border-[#E5E7EB] text-[#111827] placeholder-[#9CA3AF]'
+                          }`}
                       />
                     </div>
                   </div>
@@ -623,9 +666,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                           value={signUpPassword}
                           onChange={(e) => setSignUpPassword(e.target.value)}
                           placeholder="••••••••••••"
-                          className={`w-full text-xs font-medium pl-9 pr-8 py-2.5 rounded-xl border focus:outline-none focus:ring-2 focus:ring-[#10B981] ${
-                            isDark ? 'bg-[#0A0A0A] border-[#262626] text-[#FAFAFA] placeholder-[#525252]' : 'bg-[#F8FAFC] border-[#E5E7EB] text-[#111827] placeholder-[#9CA3AF]'
-                          }`}
+                          className={`w-full text-xs font-medium pl-9 pr-8 py-2.5 rounded-xl border focus:outline-none focus:ring-2 focus:ring-[#10B981] ${isDark ? 'bg-[#0A0A0A] border-[#262626] text-[#FAFAFA] placeholder-[#525252]' : 'bg-[#F8FAFC] border-[#E5E7EB] text-[#111827] placeholder-[#9CA3AF]'
+                            }`}
                         />
                         <button
                           type="button"
@@ -649,9 +691,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                           value={signUpConfirmPassword}
                           onChange={(e) => setSignUpConfirmPassword(e.target.value)}
                           placeholder="••••••••••••"
-                          className={`w-full text-xs font-medium pl-9 pr-8 py-2.5 rounded-xl border focus:outline-none focus:ring-2 focus:ring-[#10B981] ${
-                            isDark ? 'bg-[#0A0A0A] border-[#262626] text-[#FAFAFA] placeholder-[#525252]' : 'bg-[#F8FAFC] border-[#E5E7EB] text-[#111827] placeholder-[#9CA3AF]'
-                          }`}
+                          className={`w-full text-xs font-medium pl-9 pr-8 py-2.5 rounded-xl border focus:outline-none focus:ring-2 focus:ring-[#10B981] ${isDark ? 'bg-[#0A0A0A] border-[#262626] text-[#FAFAFA] placeholder-[#525252]' : 'bg-[#F8FAFC] border-[#E5E7EB] text-[#111827] placeholder-[#9CA3AF]'
+                            }`}
                         />
                         <button
                           type="button"
@@ -791,12 +832,11 @@ export const AuthPage: React.FC<AuthPageProps> = ({
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className={`w-full max-w-lg p-6 rounded-[22px] border shadow-2xl relative ${
-                isDark ? 'bg-[#111111] border-[#262626] text-[#FAFAFA]' : 'bg-[#FFFFFF] border-[#E5E7EB] text-[#111827]'
-              }`}
+              className={`w-full max-w-lg p-6 rounded-[22px] border shadow-2xl relative ${isDark ? 'bg-[#111111] border-[#262626] text-[#FAFAFA]' : 'bg-[#FFFFFF] border-[#E5E7EB] text-[#111827]'
+                }`}
             >
               <SessionManager theme={theme} onClose={() => setShowSessionsModal(false)} />
-              
+
               <div className="mt-5 pt-3 border-t border-current/10 text-right">
                 <button
                   type="button"

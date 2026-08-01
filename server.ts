@@ -3,6 +3,7 @@ import path from "path";
 import dotenv from "dotenv";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Type } from "@google/genai";
+import { createClient } from "@supabase/supabase-js";
 
 dotenv.config();
 
@@ -33,8 +34,28 @@ async function startServer() {
     res.json({ status: "ok", service: "Lumini Backend", timestamp: new Date().toISOString() });
   });
 
+  const SUPABASE_URL = process.env.VITE_SUPABASE_URL || '';
+  const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || '';
+  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  const authenticateToken = async (req: any, res: any, next: any) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.replace('Bearer ', '');
+    
+    if (!token) return res.status(401).json({ status: "error", message: "Unauthorized: Missing Token" });
+
+    const { data, error } = await supabase.auth.getUser(token);
+
+    if (error || !data.user) {
+      return res.status(401).json({ status: "error", message: "Unauthorized: Invalid Token" });
+    }
+    
+    req.user = data.user;
+    next();
+  };
+
   // AI Curriculum Generator Endpoint
-  app.post("/api/generate-curriculum", async (req, res) => {
+  app.post("/api/generate-curriculum", authenticateToken, async (req, res) => {
     try {
       const { subject, level, focus, format } = req.body;
       const client = getGeminiClient();
@@ -163,7 +184,7 @@ Respond in structured JSON format with exact keys:
   });
 
   // AI Audit Syllabus Endpoint
-  app.post("/api/audit-syllabus", async (req, res) => {
+  app.post("/api/audit-syllabus", authenticateToken, async (req, res) => {
     try {
       const { syllabusText } = req.body;
       const client = getGeminiClient();

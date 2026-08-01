@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ThemeMode, InstitutionWorkspace } from './types';
+import { useAuth } from './hooks/useAuth';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { TrustSection } from './components/TrustSection';
@@ -25,6 +26,17 @@ export default function App() {
   const [authTab, setAuthTab] = useState<AuthTab>('signIn');
   const [activeModal, setActiveModal] = useState<'none' | 'signIn' | 'getStarted' | 'watchDemo' | 'bookDemo' | 'pdfExport'>('none');
   const [activeWorkspace, setActiveWorkspace] = useState<InstitutionWorkspace | undefined>();
+  const { session, isLoading } = useAuth();
+
+  useEffect(() => {
+    if (!isLoading) {
+      if (session && viewMode === 'auth') {
+        setViewMode('dashboard');
+      } else if (!session && viewMode === 'dashboard') {
+        setViewMode('landing');
+      }
+    }
+  }, [session, isLoading, viewMode]);
 
   useEffect(() => {
     // Synchronize HTML element background and theme
@@ -89,6 +101,7 @@ export default function App() {
       {/* 1. Header Navigation */}
       <Navbar
         theme={theme}
+        session={session}
         onToggleTheme={toggleTheme}
         onOpenSignIn={() => handleOpenAuth('signIn')}
         onOpenGetStarted={() => handleOpenAuth('signUp')}

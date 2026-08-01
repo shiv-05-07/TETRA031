@@ -11,6 +11,7 @@ import {
   Check
 } from 'lucide-react';
 import { ThemeMode } from '../../types';
+import { supabase } from '../../lib/supabase';
 
 interface EmailVerificationViewProps {
   email: string;
@@ -71,23 +72,33 @@ export const EmailVerificationView: React.FC<EmailVerificationViewProps> = ({
     }
   };
 
-  const handleVerify = (e: React.FormEvent) => {
+  const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
 
-    if (code.some(digit => digit === '')) {
+    const token = code.join('');
+    if (token.length < 6) {
       setErrorMsg('Please enter all 6 digits of your verification code.');
       return;
     }
 
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
+    const { error } = await supabase.auth.verifyOtp({
+      email,
+      token,
+      type: 'signup',
+    });
+    
+    setIsLoading(false);
+    
+    if (error) {
+      setErrorMsg(error.message);
+    } else {
       setIsSuccess(true);
       setTimeout(() => {
         onVerificationComplete();
       }, 1500);
-    }, 1200);
+    }
   };
 
   const handleResend = () => {
