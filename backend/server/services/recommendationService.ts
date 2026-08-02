@@ -6,7 +6,7 @@ if (!apiKey) {
 }
 
 const genAI = new GoogleGenerativeAI(apiKey);
-const generationModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); 
+const generationModel = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
 
 export interface RecommendationParams {
   curriculumSummary: string;
