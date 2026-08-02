@@ -3,7 +3,7 @@ import path from "path";
 import dotenv from "dotenv";
 import { createServer as createViteServer } from "vite";
 import apiRouter from "./backend/src/routes/index";
-
+import uploadRoutes from "./backend/src/routes/upload.routes";
 dotenv.config();
 
 async function startServer() {
@@ -11,7 +11,7 @@ async function startServer() {
   const PORT = Number(process.env.PORT) || 3000;
 
   app.use(express.json({ limit: "10mb" }));
-
+  app.use("/api", uploadRoutes);
   // Mount clean API Router under /api
   app.use("/api", apiRouter);
 
