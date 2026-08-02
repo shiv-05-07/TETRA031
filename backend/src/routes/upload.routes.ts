@@ -4,6 +4,16 @@ import { uploadController } from "../controllers/upload.controller";
 
 const router = Router();
 
-router.post("/upload", upload.single("file"), uploadController);
+router.get("/test", (_, res) => {
+  res.json({
+    success: true,
+  });
+});
+
+router.post(
+  "/upload",
+  upload.single("file"),
+  uploadController
+);
 
 export default router;

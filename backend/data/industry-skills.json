@@ -1,0 +1,156 @@
+{
+  "industry": "Software Engineering & Artificial Intelligence",
+  "version": "1.0",
+  "domains": [
+    {
+      "name": "Artificial Intelligence",
+      "skills": [
+        "Python",
+        "NumPy",
+        "Pandas",
+        "Scikit-learn",
+        "TensorFlow",
+        "PyTorch",
+        "Machine Learning",
+        "Deep Learning",
+        "Neural Networks",
+        "Computer Vision",
+        "Natural Language Processing",
+        "Prompt Engineering",
+        "Large Language Models",
+        "Retrieval-Augmented Generation",
+        "Vector Databases",
+        "Embeddings",
+        "Semantic Search",
+        "Model Evaluation",
+        "Fine Tuning",
+        "AI Ethics"
+      ],
+      "tools": [
+        "Google Colab",
+        "Jupyter Notebook",
+        "Hugging Face",
+        "LangChain",
+        "LlamaIndex",
+        "ChromaDB",
+        "FAISS",
+        "Neo4j",
+        "OpenAI API",
+        "Gemini API"
+      ]
+    },
+    {
+      "name": "Software Engineering",
+      "skills": [
+        "Object Oriented Programming",
+        "Data Structures",
+        "Algorithms",
+        "REST API",
+        "Authentication",
+        "Authorization",
+        "System Design",
+        "Design Patterns",
+        "Unit Testing",
+        "Integration Testing",
+        "Git",
+        "GitHub",
+        "Debugging",
+        "Version Control"
+      ],
+      "tools": [
+        "VS Code",
+        "Postman",
+        "Swagger",
+        "Git",
+        "GitHub"
+      ]
+    },
+    {
+      "name": "Backend Development",
+      "skills": [
+        "Node.js",
+        "Express.js",
+        "TypeScript",
+        "Java",
+        "Spring Boot",
+        "Python",
+        "FastAPI",
+        "Database Design",
+        "ORM",
+        "Caching",
+        "API Development"
+      ],
+      "tools": [
+        "Express",
+        "FastAPI",
+        "Spring Boot",
+        "Prisma",
+        "Redis"
+      ]
+    },
+    {
+      "name": "Databases",
+      "skills": [
+        "SQL",
+        "PostgreSQL",
+        "MySQL",
+        "MongoDB",
+        "Graph Databases",
+        "Database Optimization",
+        "Indexing",
+        "Transactions"
+      ],
+      "tools": [
+        "Supabase",
+        "PostgreSQL",
+        "MongoDB",
+        "Neo4j",
+        "Redis"
+      ]
+    },
+    {
+      "name": "Cloud & DevOps",
+      "skills": [
+        "Docker",
+        "Kubernetes",
+        "Linux",
+        "CI/CD",
+        "Cloud Computing",
+        "Microservices",
+        "Containerization",
+        "Infrastructure as Code",
+        "Monitoring"
+      ],
+      "tools": [
+        "Docker",
+        "Kubernetes",
+        "GitHub Actions",
+        "Jenkins",
+        "AWS",
+        "Azure",
+        "Google Cloud",
+        "Terraform"
+      ]
+    },
+    {
+      "name": "Data Science",
+      "skills": [
+        "Statistics",
+        "Data Analysis",
+        "Data Visualization",
+        "Feature Engineering",
+        "Exploratory Data Analysis",
+        "Data Cleaning",
+        "Predictive Modeling"
+      ],
+      "tools": [
+        "Pandas",
+        "NumPy",
+        "Matplotlib",
+        "Seaborn",
+        "Power BI",
+        "Tableau"
+      ]
+    }
+  ]
+}

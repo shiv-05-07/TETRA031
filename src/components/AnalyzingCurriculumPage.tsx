@@ -121,17 +121,13 @@ export const AnalyzingCurriculumPage: React.FC<AnalyzingCurriculumPageProps> = (
     return () => clearInterval(msgInterval);
   }, [liveStatusMessages.length]);
 
-  // Step progression sequence
+  // Step progression sequence for loading animation
   useEffect(() => {
-    const timer1 = setTimeout(() => setCurrentStep(2), 1200);
-    const timer2 = setTimeout(() => setCurrentStep(3), 3000);
-    const timer3 = setTimeout(() => setCurrentStep(4), 4800);
-    const timer4 = setTimeout(() => setCurrentStep(5), 6800);
-    const timer5 = setTimeout(() => setCurrentStep(6), 9000);
-    const timer6 = setTimeout(() => {
-      setCurrentStep(7);
-      setIsFinished(true);
-    }, 11200);
+    const timer1 = setTimeout(() => setCurrentStep(2), 1500);
+    const timer2 = setTimeout(() => setCurrentStep(3), 3500);
+    const timer3 = setTimeout(() => setCurrentStep(4), 5500);
+    const timer4 = setTimeout(() => setCurrentStep(5), 7500);
+    const timer5 = setTimeout(() => setCurrentStep(6), 9500);
 
     return () => {
       clearTimeout(timer1);
@@ -139,35 +135,18 @@ export const AnalyzingCurriculumPage: React.FC<AnalyzingCurriculumPageProps> = (
       clearTimeout(timer3);
       clearTimeout(timer4);
       clearTimeout(timer5);
-      clearTimeout(timer6);
     };
   }, []);
 
-  // Countdown timer effect
+  // Countdown timer effect for visual display
   useEffect(() => {
-    if (countdown <= 0 || isFinished) return;
+    if (countdown <= 0) return;
     const interval = setInterval(() => {
-      setCountdown((prev) => Math.max(0, prev - 1));
-    }, 400);
+      setCountdown((prev) => Math.max(1, prev - 1));
+    }, 1000);
 
     return () => clearInterval(interval);
-  }, [countdown, isFinished]);
-
-  // Transition to completion automatically
-  const completionTriggeredRef = React.useRef(false);
-  useEffect(() => {
-    if (isFinished && !completionTriggeredRef.current) {
-      completionTriggeredRef.current = true;
-      setIsExiting(true);
-      const exitTimer = setTimeout(() => {
-        onComplete();
-      }, 750);
-      return () => {
-        // Only clear if component unmounts before timer finishes
-        clearTimeout(exitTimer);
-      };
-    }
-  }, [isFinished, onComplete]);
+  }, [countdown]);
 
   // Progress percentage calculation
   const progressPercentage = isFinished

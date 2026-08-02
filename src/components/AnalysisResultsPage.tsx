@@ -53,31 +53,39 @@ export const AnalysisResultsPage: React.FC<AnalysisResultsPageProps> = ({
 }) => {
   const tokens = getThemeTokens(theme);
 
-  const displayTitle = record?.courseTitle || courseTitle || 'Data Structures and Algorithms';
+  const backendCourse = record?.backendAnalysis?.course;
+  const backendPrereqs = record?.backendAnalysis?.prerequisites;
+
+  const displayTitle = (backendCourse?.name && backendCourse.name !== 'Unknown Course')
+    ? backendCourse.name
+    : record?.courseTitle || courseTitle || 'Data Structures and Algorithms';
+
   const displayDepartment = record?.department || department || 'Computer Science & Engineering';
-  const displaySemester = record?.semester || semester || 'IV';
+  const displaySemester = (backendCourse?.semester ? `Semester ${backendCourse.semester}` : null) || record?.semester || semester || 'IV';
   const displayAcademicYear = record?.academicYear || academicYear || '2025–2026';
   const displayDate = record?.date || 'Just now';
 
-  // Missing Skills Chips
-  const missingSkills = record?.missingSkills || [
-    'Docker',
-    'Kubernetes',
-    'LangChain',
-    'GraphRAG',
-    'Neo4j',
-    'Prompt Engineering',
-    'TensorFlow',
-    'FastAPI',
-    'CrewAI',
-    'LLMOps',
-    'Vector Databases',
-    'Kafka',
-    'Redis',
-    'CI/CD',
-    'MLOps',
-    'PyTorch',
-  ];
+  // Missing Skills Chips (Uses real backend prerequisites if available)
+  const missingSkills = (backendPrereqs && backendPrereqs.length > 0)
+    ? backendPrereqs
+    : record?.missingSkills || [
+        'Docker',
+        'Kubernetes',
+        'LangChain',
+        'GraphRAG',
+        'Neo4j',
+        'Prompt Engineering',
+        'TensorFlow',
+        'FastAPI',
+        'CrewAI',
+        'LLMOps',
+        'Vector Databases',
+        'Kafka',
+        'Redis',
+        'CI/CD',
+        'MLOps',
+        'PyTorch',
+      ];
 
   // Outdated Skills Chips
   const outdatedSkills = record?.outdatedSkills || [

@@ -1,196 +1,97 @@
 import { driver } from "../config/neo4j";
+import { CourseAnalysis } from "./analysis.service";
 
-export interface TopicNode {
-    name: string;
-    prerequisites?: string[];
-}
+export async function createKnowledgeGraph(
+    documentId: string,
+    analysis: CourseAnalysis
+): Promise<void> {
+    console.log(`[DEBUG] Starting Neo4j knowledge graph generation for documentId: ${documentId}`);
+    const session = driver.session();
 
-export interface UnitNode {
-    name: string;
-    topics: TopicNode[];
-}
+    try {
+        const courseName = analysis.course?.name || "Untitled Course";
+        const semester = analysis.course?.semester ?? null;
+        const credits = analysis.course?.credits ?? null;
+        const units = analysis.units || [];
+        const prerequisites = analysis.prerequisites || [];
+        const learningOutcomes = analysis.learningOutcomes || [];
+        const books = analysis.books || [];
 
-export interface SubjectGraph {
-    name: string;
-    semester?: number;
-    credits?: number;
-    units: UnitNode[];
-}
+        // Extract tools or software mentioned across topics and outcomes
+        const toolKeywords = ["Python", "Java", "C++", "C", "SQL", "Git", "Docker", "Linux", "VSCode", "React", "Node", "MongoDB", "PostgreSQL", "R"];
+        const extractedToolsSet = new Set<string>();
 
-class GraphService {
-    /**
-     * Creates/updates a complete subject graph.
-     */
-    async createSubjectGraph(data: SubjectGraph) {
-        const session = driver.session();
-
-        try {
-            await session.executeWrite(async (tx) => {
-                // Subject
-                await tx.run(
-                    `
-          MERGE (s:Subject {name:$name})
-          SET
-            s.semester = $semester,
-            s.credits = $credits,
-            s.updatedAt = datetime()
-          `,
-                    {
-                        name: data.name,
-                        semester: data.semester ?? null,
-                        credits: data.credits ?? null,
-                    }
-                );
-
-                // Units
-                for (const unit of data.units) {
-                    await tx.run(
-                        `
-            MATCH (s:Subject {name:$subject})
-
-            MERGE (u:Unit {name:$unit})
-
-            MERGE (s)-[:HAS_UNIT]->(u)
-            `,
-                        {
-                            subject: data.name,
-                            unit: unit.name,
-                        }
-                    );
-
-                    // Topics
-                    for (const topic of unit.topics) {
-                        await tx.run(
-                            `
-              MATCH (u:Unit {name:$unit})
-
-              MERGE (t:Topic {name:$topic})
-
-              MERGE (u)-[:HAS_TOPIC]->(t)
-              `,
-                            {
-                                unit: unit.name,
-                                topic: topic.name,
-                            }
-                        );
-
-                        // Prerequisites
-                        if (topic.prerequisites) {
-                            for (const prerequisite of topic.prerequisites) {
-                                await tx.run(
-                                    `
-                  MATCH (t:Topic {name:$topic})
-
-                  MERGE (p:Topic {name:$prerequisite})
-
-                  MERGE (t)-[:PREREQUISITE]->(p)
-                  `,
-                                    {
-                                        topic: topic.name,
-                                        prerequisite,
-                                    }
-                                );
-                            }
-                        }
-                    }
-                }
-            });
-
-            return {
-                success: true,
-            };
-        } finally {
-            await session.close();
+        const allText = JSON.stringify(analysis).toLowerCase();
+        for (const kw of toolKeywords) {
+            if (allText.includes(kw.toLowerCase())) {
+                extractedToolsSet.add(kw);
+            }
         }
-    }
-
-    /**
-     * Returns complete graph for visualization.
-     */
-    async getKnowledgeGraph() {
-        const session = driver.session();
-
-        try {
-            const result = await session.run(`
-        MATCH (n)
-        OPTIONAL MATCH (n)-[r]->(m)
-
-        RETURN
-          collect(DISTINCT n) AS nodes,
-          collect(DISTINCT {
-            source:id(startNode(r)),
-            target:id(endNode(r)),
-            type:type(r)
-          }) AS relationships
-      `);
-
-            return result.records[0].toObject();
-        } finally {
-            await session.close();
+        if (extractedToolsSet.size === 0) {
+            extractedToolsSet.add("Standard Development Environment");
         }
-    }
+        const tools = Array.from(extractedToolsSet);
 
-    /**
-     * Semantic graph search.
-     */
-    async findTopic(topic: string) {
-        const session = driver.session();
+        // Cypher query creating nodes (Course, Unit, Topic, Skill, Tool, Book, Prerequisite)
+        // and relationships ((Course)-[:HAS_UNIT]->(Unit), (Unit)-[:HAS_TOPIC]->(Topic), (Course)-[:DEVELOPS]->(Skill), (Course)-[:USES_TOOL]->(Tool), (Course)-[:REQUIRES]->(Prerequisite), (Course)-[:REFERENCES]->(Book))
+        const cypherQuery = `
+            MERGE (c:Course { documentId: $documentId })
+            SET c.courseName = $courseName,
+                c.semester = $semester,
+                c.credits = $credits
 
-        try {
-            const result = await session.run(
-                `
-        MATCH (t:Topic {name:$topic})
+            WITH c
+            UNWIND $units AS uData
+            MERGE (u:Unit { name: uData.title, documentId: $documentId })
+            MERGE (c)-[:HAS_UNIT]->(u)
 
-        OPTIONAL MATCH (t)-[:PREREQUISITE]->(p)
+            WITH c, u, uData
+            UNWIND uData.topics AS tName
+            MERGE (t:Topic { name: tName, documentId: $documentId })
+            MERGE (u)-[:HAS_TOPIC]->(t)
+            MERGE (sk:Skill { name: tName, documentId: $documentId })
+            MERGE (c)-[:DEVELOPS]->(sk)
 
-        OPTIONAL MATCH (u)-[:HAS_TOPIC]->(t)
+            WITH c
+            UNWIND $prerequisites AS pName
+            MERGE (p:Prerequisite { name: pName, documentId: $documentId })
+            MERGE (c)-[:REQUIRES]->(p)
 
-        OPTIONAL MATCH (s)-[:HAS_UNIT]->(u)
+            WITH c
+            UNWIND $learningOutcomes AS loName
+            MERGE (s:Skill { name: loName, documentId: $documentId })
+            MERGE (c)-[:DEVELOPS]->(s)
 
-        RETURN s,u,t,collect(p) AS prerequisites
-        `,
-                { topic }
-            );
+            WITH c
+            UNWIND $books AS bName
+            MERGE (b:Book { title: bName, documentId: $documentId })
+            MERGE (c)-[:REFERENCES]->(b)
 
-            return result.records.map((r) => r.toObject());
-        } finally {
-            await session.close();
-        }
-    }
+            WITH c
+            UNWIND $tools AS tlName
+            MERGE (tl:Tool { name: tlName, documentId: $documentId })
+            MERGE (c)-[:USES_TOOL]->(tl)
+        `;
 
-    /**
-     * Deletes a subject and its relationships.
-     */
-    async deleteSubject(subject: string) {
-        const session = driver.session();
+        await session.executeWrite((tx) =>
+            tx.run(cypherQuery, {
+                documentId,
+                courseName,
+                semester,
+                credits,
+                units: units.length > 0 ? units : [{ title: "Unit 1: Fundamentals", topics: ["Introduction", "Core Principles"] }],
+                prerequisites: prerequisites.length > 0 ? prerequisites : ["Basic Knowledge"],
+                learningOutcomes: learningOutcomes.length > 0 ? learningOutcomes : ["Master Core Concepts"],
+                books: books.length > 0 ? books : ["Standard Reference Book"],
+                tools: tools,
+            })
+        );
 
-        try {
-            await session.run(
-                `
-        MATCH (s:Subject {name:$subject})
-
-        DETACH DELETE s
-        `,
-                { subject }
-            );
-        } finally {
-            await session.close();
-        }
-    }
-
-    /**
-     * Database health check.
-     */
-    async health() {
-        const session = driver.session();
-
-        try {
-            await session.run("RETURN 1");
-            return true;
-        } finally {
-            await session.close();
-        }
+        console.log(`[DEBUG] Neo4j knowledge graph generated successfully for documentId: ${documentId}`);
+    } catch (err: any) {
+        console.error("[DEBUG] Neo4j graph generation failed:", err);
+        throw new Error(`Neo4j Graph Generation Error: ${err.message}`);
+    } finally {
+        await session.close();
     }
 }
-
-export default new GraphService();

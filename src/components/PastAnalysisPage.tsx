@@ -43,6 +43,7 @@ export interface PastAnalysisRecord {
   status: 'Completed' | 'In Progress' | 'Needs Review';
   missingSkills: string[];
   outdatedSkills: string[];
+  backendAnalysis?: any;
 }
 
 interface PastAnalysisPageProps {
