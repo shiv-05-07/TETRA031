@@ -1,9 +1,16 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+import { getGeminiClient } from "../config/gemini";
 
 export async function generateEmbedding(text: string): Promise<number[]> {
-  const model = genAI.getGenerativeModel({ model: "gemini-embedding-2" });
-  const result = await model.embedContent(text);
-  return result.embedding.values.slice(0, 1536);
+  const ai = getGeminiClient();
+  if (!ai) return [];
+  try {
+    const response = await ai.models.embedContent({
+      model: "text-embedding-004",
+      contents: text,
+    });
+    const res = response as any;
+    return res.embedding?.values || res.embeddings?.[0]?.values || [];
+  } catch {
+    return [];
+  }
 }

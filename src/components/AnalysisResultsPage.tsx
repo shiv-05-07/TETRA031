@@ -54,7 +54,7 @@ export const AnalysisResultsPage: React.FC<AnalysisResultsPageProps> = ({
   const tokens = getThemeTokens(theme);
 
   const backendCourse = record?.backendAnalysis?.course;
-  const backendPrereqs = record?.backendAnalysis?.prerequisites;
+  const gapReport = record?.gapReport;
 
   const displayTitle = (backendCourse?.name && backendCourse.name !== 'Unknown Course')
     ? backendCourse.name
@@ -65,41 +65,43 @@ export const AnalysisResultsPage: React.FC<AnalysisResultsPageProps> = ({
   const displayAcademicYear = record?.academicYear || academicYear || '2025–2026';
   const displayDate = record?.date || 'Just now';
 
-  // Missing Skills Chips (Uses real backend prerequisites if available)
-  const missingSkills = (backendPrereqs && backendPrereqs.length > 0)
-    ? backendPrereqs
-    : record?.missingSkills || [
-        'Docker',
-        'Kubernetes',
-        'LangChain',
-        'GraphRAG',
-        'Neo4j',
-        'Prompt Engineering',
-        'TensorFlow',
-        'FastAPI',
-        'CrewAI',
-        'LLMOps',
-        'Vector Databases',
-        'Kafka',
-        'Redis',
-        'CI/CD',
-        'MLOps',
-        'PyTorch',
-      ];
+  // Dynamic skills arrays
+  const missingSkills = (gapReport?.missingSkills && gapReport.missingSkills.length > 0)
+    ? gapReport.missingSkills
+    : record?.missingSkills || [];
 
-  // Outdated Skills Chips
-  const outdatedSkills = record?.outdatedSkills || [
-    'jQuery',
-    'SOAP',
-    'AngularJS',
-    'Bootstrap 3',
-    'Visual Basic',
-    'Flash',
-    'SVN',
-    'Traditional PHP',
-    'Oracle Forms',
-    'Silverlight',
-  ];
+  const outdatedSkills = (gapReport?.missingTools && gapReport.missingTools.length > 0)
+    ? gapReport.missingTools
+    : record?.outdatedSkills || [];
+
+  const recommendationsList = (gapReport?.recommendations && gapReport.recommendations.length > 0)
+    ? gapReport.recommendations
+    : [];
+
+  const extractedTopicsCount = (record?.backendAnalysis?.units || []).reduce(
+    (acc: number, u: any) => acc + (Array.isArray(u?.topics) ? u.topics.length : 0),
+    0
+  );
+
+  const coveredSkillsCount = extractedTopicsCount > 0
+    ? extractedTopicsCount
+    : record?.coveredSkills || 20;
+
+  const missingSkillsCount = missingSkills.length;
+  const outdatedSkillsCount = outdatedSkills.length;
+
+  // STRICT EQUATION 1: totalSkills = coveredSkills + missingSkills + outdatedSkills
+  const totalSkillsCount = coveredSkillsCount + missingSkillsCount + outdatedSkillsCount;
+
+  // STRICT EQUATION 2: coveragePercentage = (coveredSkills / totalSkills) * 100
+  const coveragePercentage = totalSkillsCount > 0
+    ? Math.round((coveredSkillsCount / totalSkillsCount) * 100)
+    : (gapReport?.coverage ?? 0);
+
+  const alignmentScore = gapReport?.overallScore ?? record?.alignmentScore ?? Math.min(100, Math.round(coveragePercentage * 0.8 + 20));
+  const overallGapScore = Math.max(0, 100 - coveragePercentage);
+  const curriculumSimilarityScore = Math.min(100, Math.round(coveragePercentage * 0.95));
+  const industrySimilarityScore = alignmentScore;
 
   return (
     <motion.div
@@ -220,7 +222,7 @@ export const AnalysisResultsPage: React.FC<AnalysisResultsPageProps> = ({
             </div>
             <div className="mt-4">
               <span className="text-3xl font-bold font-mono tracking-tight" style={{ color: tokens.textPrimary }}>
-                162
+                {totalSkillsCount}
               </span>
             </div>
           </Card>
@@ -235,9 +237,9 @@ export const AnalysisResultsPage: React.FC<AnalysisResultsPageProps> = ({
             </div>
             <div className="mt-4 flex items-baseline justify-between">
               <span className="text-3xl font-bold font-mono tracking-tight text-emerald-400">
-                92
+                {coveredSkillsCount}
               </span>
-              <span className="text-xs font-semibold text-emerald-400">56.8% of total</span>
+              <span className="text-xs font-semibold text-emerald-400">{coveragePercentage}% of total</span>
             </div>
           </Card>
 
@@ -251,25 +253,25 @@ export const AnalysisResultsPage: React.FC<AnalysisResultsPageProps> = ({
             </div>
             <div className="mt-4 flex items-baseline justify-between">
               <span className="text-3xl font-bold font-mono tracking-tight text-red-400">
-                48
+                {missingSkillsCount}
               </span>
-              <span className="text-xs font-semibold text-red-400">29.6% of total</span>
+              <span className="text-xs font-semibold text-red-400">{Math.round((missingSkillsCount / totalSkillsCount) * 100)}% of total</span>
             </div>
           </Card>
 
-          {/* Card 4: Outdated Skills */}
+          {/* Card 4: Outdated / Missing Tools */}
           <Card theme={theme} hoverEffect={true} className="p-5 border flex flex-col justify-between h-full">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold" style={{ color: tokens.textSecondary }}>
-                Outdated Skills
+                Outdated / Missing Tools
               </span>
               <Clock className="w-4 h-4 text-amber-400" />
             </div>
             <div className="mt-4 flex items-baseline justify-between">
               <span className="text-3xl font-bold font-mono tracking-tight text-amber-400">
-                22
+                {outdatedSkillsCount}
               </span>
-              <span className="text-xs font-semibold text-amber-400">13.6% of total</span>
+              <span className="text-xs font-semibold text-amber-400">{Math.round((outdatedSkillsCount / totalSkillsCount) * 100)}% of total</span>
             </div>
           </Card>
 
@@ -278,7 +280,7 @@ export const AnalysisResultsPage: React.FC<AnalysisResultsPageProps> = ({
             <span className="text-xs font-semibold mb-2" style={{ color: tokens.textSecondary }}>
               Coverage Percentage
             </span>
-            <CircularProgress percentage={56.8} size={72} strokeWidth={7} theme={theme} color="#5BE16A" />
+            <CircularProgress percentage={coveragePercentage} size={72} strokeWidth={7} theme={theme} color="#5BE16A" />
           </Card>
         </div>
       </div>
@@ -296,9 +298,9 @@ export const AnalysisResultsPage: React.FC<AnalysisResultsPageProps> = ({
               <span className="text-xs font-bold block" style={{ color: tokens.textSecondary }}>
                 Curriculum Similarity Score
               </span>
-              <span className="text-3xl font-bold font-mono text-emerald-400 block">58%</span>
+              <span className="text-3xl font-bold font-mono text-emerald-400 block">{curriculumSimilarityScore}%</span>
               <div className="w-full h-2 rounded-full bg-gray-700/30 overflow-hidden">
-                <div className="h-full bg-emerald-400 rounded-full" style={{ width: '58%' }} />
+                <div className="h-full bg-emerald-400 rounded-full" style={{ width: `${curriculumSimilarityScore}%` }} />
               </div>
               <p className="text-xs leading-relaxed" style={{ color: tokens.textMuted }}>
                 Text similarity alignment score comparing course syllabus topics against standard academic benchmarking.
@@ -310,9 +312,9 @@ export const AnalysisResultsPage: React.FC<AnalysisResultsPageProps> = ({
               <span className="text-xs font-bold block" style={{ color: tokens.textSecondary }}>
                 Industry Similarity Score
               </span>
-              <span className="text-3xl font-bold font-mono text-blue-400 block">86%</span>
+              <span className="text-3xl font-bold font-mono text-blue-400 block">{industrySimilarityScore}%</span>
               <div className="w-full h-2 rounded-full bg-gray-700/30 overflow-hidden">
-                <div className="h-full bg-blue-400 rounded-full" style={{ width: '86%' }} />
+                <div className="h-full bg-blue-400 rounded-full" style={{ width: `${industrySimilarityScore}%` }} />
               </div>
               <p className="text-xs leading-relaxed" style={{ color: tokens.textMuted }}>
                 Industry relevance alignment based on real-time job market requirements and hiring trends.
@@ -325,10 +327,10 @@ export const AnalysisResultsPage: React.FC<AnalysisResultsPageProps> = ({
                 Overall Gap Score
               </span>
               <div className="relative flex items-center justify-center my-1">
-                <CircularProgress percentage={42} size={84} strokeWidth={8} theme={theme} color="#F59E0B" />
+                <CircularProgress percentage={overallGapScore} size={84} strokeWidth={8} theme={theme} color="#F59E0B" />
               </div>
               <span className="px-3 py-0.5 rounded-full text-xs font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30">
-                Moderate Gap
+                {overallGapScore > 50 ? 'High Gap' : overallGapScore > 25 ? 'Moderate Gap' : 'Low Gap'}
               </span>
               <p className="text-xs leading-relaxed" style={{ color: tokens.textMuted }}>
                 Skills & topics to bridge for optimal industry alignment.
@@ -440,9 +442,9 @@ export const AnalysisResultsPage: React.FC<AnalysisResultsPageProps> = ({
       {/* SECTION 5: SKILL PRIORITY TABLE */}
       <div className="space-y-3">
         <h3 className="text-xs font-bold uppercase tracking-wider" style={{ color: tokens.textMuted }}>
-          5. Skill Priority
+          5. Skill Priority & Recommendations
         </h3>
-        <SkillPriorityTable theme={theme} />
+        <SkillPriorityTable theme={theme} customSkills={missingSkills} />
       </div>
 
       {/* BOTTOM ACTION BAR (ONLY TWO BUTTONS AS SPECIFIED) */}

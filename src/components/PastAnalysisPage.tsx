@@ -44,6 +44,7 @@ export interface PastAnalysisRecord {
   missingSkills: string[];
   outdatedSkills: string[];
   backendAnalysis?: any;
+  gapReport?: any;
 }
 
 interface PastAnalysisPageProps {

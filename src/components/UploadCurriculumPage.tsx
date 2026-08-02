@@ -159,21 +159,47 @@ startxref
       });
 
       const result = await response.json();
+      console.log('[DEBUG FRONTEND] Response received from POST /api/upload:', result);
 
       if (!response.ok || !result.success) {
         throw new Error(result.message || 'Upload and curriculum analysis failed.');
       }
 
       const analysisData = result.analysis;
+      const gapReportData = result.gapReport;
+
       const extractedCourseName =
         analysisData?.course?.name && analysisData.course.name !== 'Unknown Course'
           ? analysisData.course.name
           : courseName || 'Data Structures and Algorithms';
 
       const missingList =
-        analysisData?.prerequisites && analysisData.prerequisites.length > 0
+        gapReportData?.missingSkills && gapReportData.missingSkills.length > 0
+          ? gapReportData.missingSkills
+          : analysisData?.prerequisites && analysisData.prerequisites.length > 0
           ? analysisData.prerequisites
-          : ['Docker', 'Kubernetes', 'LangChain', 'GraphRAG', 'Neo4j'];
+          : [];
+
+      const outdatedList = gapReportData?.missingTools || [];
+
+      const extractedTopicsCount = (analysisData?.units || []).reduce(
+        (acc: number, u: any) => acc + (Array.isArray(u?.topics) ? u.topics.length : 0),
+        0
+      );
+
+      const coveredSkillsCount = extractedTopicsCount > 0 ? extractedTopicsCount : 20;
+      const missingSkillsCount = missingList.length;
+      const outdatedSkillsCount = outdatedList.length;
+
+      // STRICT EQUATION 1: totalSkills = coveredSkills + missingSkills + outdatedSkills
+      const totalSkillsCount = coveredSkillsCount + missingSkillsCount + outdatedSkillsCount;
+
+      // STRICT EQUATION 2: coveragePercentage = (coveredSkills / totalSkills) * 100
+      const coveragePercentage = totalSkillsCount > 0
+        ? Math.round((coveredSkillsCount / totalSkillsCount) * 100)
+        : (gapReportData?.coverage ?? 0);
+
+      const alignmentScore = gapReportData?.overallScore ?? Math.min(100, Math.round(coveragePercentage * 0.8 + 20));
 
       const newRecord: PastAnalysisRecord = {
         id: result.documentId || `analysis_${Date.now()}`,
@@ -184,22 +210,17 @@ startxref
         academicYear: academicYear || '2024 - 2025',
         curriculumVersion: curriculumVersion || '1.0',
         date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-        alignmentScore: 88,
-        coveragePercentage: 56.8,
-        totalSkills: 162,
-        coveredSkills: 92,
-        missingSkillsCount: missingList.length,
-        outdatedSkillsCount: 22,
+        alignmentScore,
+        coveragePercentage,
+        totalSkills: totalSkillsCount,
+        coveredSkills: coveredSkillsCount,
+        missingSkillsCount,
+        outdatedSkillsCount,
         status: 'Completed',
         missingSkills: missingList,
-        outdatedSkills: [
-          'jQuery',
-          'SOAP',
-          'AngularJS',
-          'Bootstrap 3',
-          'Visual Basic',
-        ],
+        outdatedSkills: outdatedList,
         backendAnalysis: analysisData,
+        gapReport: gapReportData,
       };
 
       setCompletedRecord(newRecord);

@@ -16,70 +16,56 @@ export interface PrioritySkill {
 
 interface SkillPriorityTableProps {
   theme: ThemeMode;
+  customSkills?: string[];
 }
 
-export const SkillPriorityTable: React.FC<SkillPriorityTableProps> = ({ theme }) => {
+export const SkillPriorityTable: React.FC<SkillPriorityTableProps> = ({ theme, customSkills }) => {
   const tokens = getThemeTokens(theme);
   const [sortBy, setSortBy] = useState<'Priority' | 'Skill' | 'Demand'>('Priority');
 
-  const initialSkills: PrioritySkill[] = [
-    {
-      id: '1',
-      skill: 'Kubernetes',
-      priority: 'High',
-      industryDemand: 5,
-      academicCoverage: 1,
-      technologyRelevance: 5,
-    },
-    {
-      id: '2',
-      skill: 'Docker',
-      priority: 'High',
-      industryDemand: 5,
-      academicCoverage: 2,
-      technologyRelevance: 5,
-    },
-    {
-      id: '3',
-      skill: 'Prompt Engineering',
-      priority: 'High',
-      industryDemand: 5,
-      academicCoverage: 1,
-      technologyRelevance: 5,
-    },
-    {
-      id: '4',
-      skill: 'MLOps',
-      priority: 'Medium',
-      industryDemand: 4,
-      academicCoverage: 2,
-      technologyRelevance: 4,
-    },
-    {
-      id: '5',
-      skill: 'Vector Databases',
-      priority: 'Medium',
-      industryDemand: 4,
-      academicCoverage: 1,
-      technologyRelevance: 5,
-    },
-    {
-      id: '6',
-      skill: 'CI/CD Pipelines',
-      priority: 'Medium',
-      industryDemand: 4,
-      academicCoverage: 2,
-      technologyRelevance: 4,
-    },
-    {
-      id: '7',
-      skill: 'GraphQL APIs',
-      priority: 'Low',
-      industryDemand: 3,
-      academicCoverage: 2,
-      technologyRelevance: 3,
-    },
-  ];
+  const initialSkills: PrioritySkill[] = (customSkills && customSkills.length > 0)
+    ? customSkills.map((skillName, index) => ({
+        id: `s_${index}`,
+        skill: skillName,
+        priority: index < 3 ? 'High' : index < 7 ? 'Medium' : 'Low',
+        industryDemand: index < 3 ? 5 : index < 7 ? 4 : 3,
+        academicCoverage: 1,
+        technologyRelevance: index < 3 ? 5 : 4,
+      }))
+    : [
+        {
+          id: '1',
+          skill: 'Kubernetes',
+          priority: 'High',
+          industryDemand: 5,
+          academicCoverage: 1,
+          technologyRelevance: 5,
+        },
+        {
+          id: '2',
+          skill: 'Docker',
+          priority: 'High',
+          industryDemand: 5,
+          academicCoverage: 2,
+          technologyRelevance: 5,
+        },
+        {
+          id: '3',
+          skill: 'Prompt Engineering',
+          priority: 'High',
+          industryDemand: 5,
+          academicCoverage: 1,
+          technologyRelevance: 5,
+        },
+        {
+          id: '4',
+          skill: 'MLOps',
+          priority: 'Medium',
+          industryDemand: 4,
+          academicCoverage: 2,
+          technologyRelevance: 4,
+        },
+      ];
 
   const renderStars = (count: number, activeColor = tokens.primaryAccent) => {
     return (
