@@ -41,15 +41,11 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
           </div>
           <div className="flex flex-col">
-            <div className="flex items-center gap-1.5">
-              <span className="font-heading font-bold text-xl tracking-tight">CurricuAlign <span className="text-[#10B981]">AI</span></span>
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-[#10B981]/10 text-[#10B981] border border-[#10B981]/20">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse"></span>
-                v2.5
-              </span>
-            </div>
-            <span className={`text-[10px] tracking-wider uppercase font-mono ${isDark ? 'text-[#737373]' : 'text-[#6B7280]'}`}>
-              Enterprise Ed
+            <span className="font-heading font-bold text-xl tracking-tight">
+              Lumini
+            </span>
+            <span className={`text-[10px] font-medium tracking-wide ${isDark ? 'text-[#A6A6A6]' : 'text-[#6B7280]'}`}>
+              AI-Powered Curriculum Gap Analysis
             </span>
           </div>
         </a>

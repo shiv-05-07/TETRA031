@@ -29,6 +29,7 @@ import { AbetReportsPage } from './AbetReportsPage';
 import { UploadCurriculumPage } from './UploadCurriculumPage';
 import { AnalysisResultsPage } from './AnalysisResultsPage';
 import { PastAnalysisPage, PastAnalysisRecord } from './PastAnalysisPage';
+import { SettingsPage } from './SettingsPage';
 
 interface DashboardProps {
   theme: ThemeMode;
@@ -380,6 +381,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
             setActiveTab('workspace');
           }}
           onNavigateGraph={() => setActiveTab('graph')}
+        />
+      ) : activeTab === 'settings' ? (
+        <SettingsPage
+          theme={theme}
+          onToggleTheme={onToggleTheme}
+          onNavigateHelp={() => setActiveTab('help')}
         />
       ) : (
         /* REDESIGNED DASHBOARD MAIN VIEW */

@@ -58,7 +58,7 @@ export const HowItWorks: React.FC<HowItWorksProps> = ({ theme }) => {
         {/* Section Header */}
         <div className="text-center max-w-2xl mx-auto space-y-4 relative z-10">
           <h2 className="font-heading font-bold text-3xl sm:text-4xl lg:text-5xl tracking-tight">
-            How CurricuAlign AI Works
+            How Lumini Works
           </h2>
           <p className={`text-base leading-relaxed ${isDark ? 'text-[#B3B3B3]' : 'text-[#6B7280]'}`}>
             An AI-powered pipeline transforms your curriculum into actionable industry-alignment insights.

@@ -1,13 +1,13 @@
 # Product Requirements Document (PRD)
 
-# CurricuAlign AI
-### AI-Powered Curriculum Intelligence Platform
+# Lumini
+### AI-Powered Curriculum Gap Analysis
 
-**Version:** 1.0 (Hackathon MVP)
+**Version:** 1.0
 
-**Document Status:** Draft
+**Document Status:** Approved
 
-**Last Updated:** July 2026
+**Last Updated:** August 2026
 
 ---
 
@@ -32,19 +32,19 @@
 
 | Field | Value |
 |--------|-------|
-| Product Name | CurricuAlign AI |
-| Product Type | AI-powered Curriculum Intelligence Platform |
+| Product Name | Lumini |
+| Product Type | AI-Powered Curriculum Gap Analysis |
 | Category | EdTech |
 | Target Platform | Web Application |
 | Primary Users | Professors, Curriculum Designers, Academic Coordinators, Universities |
-| Tech Stack | Next.js, FastAPI, Supabase, Neo4j, ChromaDB, Gemini |
-| Project Type | Hackathon MVP with Startup Vision |
+| Tech Stack | Vite, React, TypeScript, Tailwind CSS, Neo4j, Gemini |
+| Project Type | Enterprise SaaS Platform |
 
 ---
 
 # 2. Executive Summary
 
-CurricuAlign AI is an AI-powered platform that helps universities modernize their curriculum by continuously aligning it with current industry demands.
+Lumini is an AI-powered platform that helps universities modernize their curriculum by continuously aligning it with current industry demands.
 
 Instead of manually reviewing and updating syllabi every few years, educators can upload an existing syllabus and receive a comprehensive curriculum audit within minutes.
 

@@ -28,12 +28,12 @@ export const Footer: React.FC<FooterProps> = ({ theme }) => {
                 </div>
               </div>
               <span className="font-heading font-bold text-xl tracking-tight">
-                CurricuAlign <span className="text-[#10B981]">AI</span>
+                Lumini
               </span>
             </a>
 
             <p className={`text-xs leading-relaxed max-w-sm ${isDark ? 'text-[#B3B3B3]' : 'text-[#6B7280]'}`}>
-              AI-powered curriculum gap analysis and industry alignment platform for modern higher education institutions.
+              Lumini is an AI-powered curriculum gap analysis platform that bridges academia and industry through semantic analysis and knowledge graphs.
             </p>
 
             <div className="flex items-center gap-3 pt-2">
@@ -108,7 +108,7 @@ export const Footer: React.FC<FooterProps> = ({ theme }) => {
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-[#262626]/40 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
           <p className={isDark ? 'text-[#737373]' : 'text-[#6B7280]'}>
-            © {new Date().getFullYear()} CurricuAlign AI. All rights reserved.
+            © {new Date().getFullYear()} Lumini. All rights reserved.
           </p>
 
           <div className="flex items-center gap-6">

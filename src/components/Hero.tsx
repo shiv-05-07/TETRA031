@@ -67,7 +67,7 @@ export const Hero: React.FC<HeroProps> = ({
                 isDark ? 'text-[#B3B3B3]' : 'text-[#6B7280]'
               }`}
             >
-              CurricuAlign AI analyzes university curricula, identifies missing and outdated skills, and compares academic content with evolving industry requirements to keep courses relevant and future-ready.
+              Lumini uses AI-powered semantic analysis, skill ontology mapping, and industry benchmarking to identify curriculum gaps, detect outdated technologies, and recommend improvements that keep academic programs aligned with evolving industry demands.
             </motion.p>
 
             {/* CTA Buttons */}

@@ -237,7 +237,7 @@ export const FAQ_LIST: FAQItem[] = [
     id: "faq-1",
     category: "General",
     question: "What is Lumini and how does it help universities?",
-    answer: "Lumini is an enterprise AI-powered curriculum intelligence platform. It analyzes course syllabi, maps learning outcomes against Bloom's Revised Taxonomy, identifies industry skill gaps against live market data, and generates lesson plans, question papers, rubrics, and accreditation reports in minutes."
+    answer: "Lumini is an AI-powered curriculum gap analysis platform. It analyzes course syllabi, maps learning outcomes against Bloom's Revised Taxonomy, identifies industry skill gaps against live market data, and generates lesson plans, question papers, rubrics, and accreditation reports in minutes."
   },
   {
     id: "faq-2",

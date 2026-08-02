@@ -125,7 +125,7 @@ export const AuthLeftPanel: React.FC<AuthLeftPanelProps> = ({ theme }) => {
         {/* Header Badge */}
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-[#10B981]/10 text-[#10B981] border border-[#10B981]/25 backdrop-blur-sm shadow-sm">
           <Sparkles className="w-3.5 h-3.5 animate-pulse" />
-          <span>Enterprise Curriculum Intelligence Platform</span>
+          <span>Lumini</span>
         </div>
 
         {/* Hero Headings */}
@@ -134,7 +134,7 @@ export const AuthLeftPanel: React.FC<AuthLeftPanelProps> = ({ theme }) => {
             Welcome to <span className="text-[#10B981]">Lumini</span>
           </h1>
           <p className={`text-sm sm:text-base leading-relaxed max-w-xl ${isDark ? 'text-[#A3A3A3]' : 'text-[#4B5563]'}`}>
-            AI-powered Curriculum Intelligence & Modernization Platform
+            AI-Powered Curriculum Gap Analysis
           </p>
         </div>
 
