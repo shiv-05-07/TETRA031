@@ -201,8 +201,17 @@ startxref
 
       const alignmentScore = gapReportData?.overallScore ?? Math.min(100, Math.round(coveragePercentage * 0.8 + 20));
 
+      const pdfUrl = result.generatedPdfUrl || result.fileUrl;
+      const recommendationsData = result.recommendations || gapReportData?.recommendations;
+      const knowledgeGraphData = result.knowledgeGraph;
+      const generatedCurriculumData = result.generatedCurriculum || analysisData;
+      const vectorSearchResultsData = result.vectorSearchResults;
+      const chatSuggestionsData = result.chatSuggestions;
+
       const newRecord: PastAnalysisRecord = {
         id: result.documentId || `analysis_${Date.now()}`,
+        documentId: result.documentId,
+        generatedPdfUrl: pdfUrl,
         courseCode: 'CS-2020',
         courseTitle: extractedCourseName,
         department: department || 'Computer Science and Engineering',
@@ -221,6 +230,11 @@ startxref
         outdatedSkills: outdatedList,
         backendAnalysis: analysisData,
         gapReport: gapReportData,
+        recommendationsData,
+        knowledgeGraphData,
+        generatedCurriculumData,
+        vectorSearchResultsData,
+        chatSuggestionsData,
       };
 
       setCompletedRecord(newRecord);

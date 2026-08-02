@@ -140,20 +140,43 @@ export const AnalysisResultsPage: React.FC<AnalysisResultsPageProps> = ({
           </div>
         </div>
 
-        {/* Right CTA: Export Summary Button */}
-        <motion.button
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
-          onClick={onExportReport || (() => window.print())}
-          className="px-4 py-2.5 rounded-[14px] font-bold text-xs shadow-lg flex items-center gap-2 cursor-pointer text-black self-start md:self-auto"
-          style={{
-            backgroundColor: tokens.primaryAccent,
-            boxShadow: `0 4px 14px ${tokens.primaryAccent}40`,
-          }}
-        >
-          <Download className="w-4 h-4 text-black" />
-          <span>Export Summary</span>
-        </motion.button>
+        {/* Right Action Bar: Download PDF & Export Summary Buttons */}
+        <div className="flex items-center gap-3 self-start md:self-auto flex-wrap">
+          {(record?.generatedPdfUrl || record?.fileUrl) && (
+            <motion.a
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              href={record?.generatedPdfUrl || record?.fileUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              download
+              onClick={(e) => {
+                const pdfUrl = record?.generatedPdfUrl || record?.fileUrl;
+                if (pdfUrl) {
+                  window.open(pdfUrl, '_blank');
+                }
+              }}
+              className="px-4 py-2.5 rounded-[14px] font-bold text-xs shadow-lg flex items-center gap-2 cursor-pointer text-white bg-blue-600 hover:bg-blue-500 transition-colors"
+            >
+              <Download className="w-4 h-4 text-white" />
+              <span>Download Generated Syllabus PDF</span>
+            </motion.a>
+          )}
+
+          <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={onExportReport || (() => window.print())}
+            className="px-4 py-2.5 rounded-[14px] font-bold text-xs shadow-lg flex items-center gap-2 cursor-pointer text-black"
+            style={{
+              backgroundColor: tokens.primaryAccent,
+              boxShadow: `0 4px 14px ${tokens.primaryAccent}40`,
+            }}
+          >
+            <Download className="w-4 h-4 text-black" />
+            <span>Export Summary</span>
+          </motion.button>
+        </div>
       </div>
 
       {/* CURRICULUM SUMMARY CARD */}
@@ -447,7 +470,75 @@ export const AnalysisResultsPage: React.FC<AnalysisResultsPageProps> = ({
         <SkillPriorityTable theme={theme} customSkills={missingSkills} />
       </div>
 
-      {/* BOTTOM ACTION BAR (ONLY TWO BUTTONS AS SPECIFIED) */}
+      {/* SECTION 6: REVISED CURRICULUM & AI RECOMMENDATIONS */}
+      {(record?.backendAnalysis?.units?.length > 0 || recommendationsList.length > 0) && (
+        <div className="space-y-3">
+          <h3 className="text-xs font-bold uppercase tracking-wider" style={{ color: tokens.textMuted }}>
+            6. Revised Curriculum & AI Recommendations
+          </h3>
+
+          <Card theme={theme} hoverEffect={false} className="p-6 border space-y-6">
+            {/* AI Recommendations List */}
+            {recommendationsList.length > 0 && (
+              <div className="space-y-3">
+                <h4 className="text-sm font-bold flex items-center gap-2" style={{ color: tokens.textPrimary }}>
+                  <Sparkles className="w-4 h-4 text-purple-400" />
+                  <span>GraphRAG AI Recommendations</span>
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {recommendationsList.map((rec: string, idx: number) => (
+                    <div
+                      key={idx}
+                      className="p-3.5 rounded-[12px] border text-xs leading-relaxed flex items-start gap-2.5"
+                      style={{ backgroundColor: tokens.inputBg, borderColor: tokens.border, color: tokens.textSecondary }}
+                    >
+                      <span className="w-5 h-5 rounded-full bg-purple-500/20 text-purple-400 font-bold font-mono text-[11px] flex items-center justify-center flex-shrink-0 mt-0.5">
+                        {idx + 1}
+                      </span>
+                      <span>{rec}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Extracted Course Units */}
+            {record?.backendAnalysis?.units && record.backendAnalysis.units.length > 0 && (
+              <div className="space-y-3 pt-2">
+                <h4 className="text-sm font-bold flex items-center gap-2" style={{ color: tokens.textPrimary }}>
+                  <Layers className="w-4 h-4 text-emerald-400" />
+                  <span>Extracted Course Units & Topics</span>
+                </h4>
+                <div className="space-y-3">
+                  {record.backendAnalysis.units.map((unit: any, uIdx: number) => (
+                    <div
+                      key={uIdx}
+                      className="p-4 rounded-[14px] border space-y-2"
+                      style={{ backgroundColor: tokens.inputBg, borderColor: tokens.border }}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold font-mono text-emerald-400">Unit {uIdx + 1}</span>
+                        <span className="text-xs font-semibold" style={{ color: tokens.textPrimary }}>{unit.title || `Unit ${uIdx + 1}`}</span>
+                      </div>
+                      {Array.isArray(unit.topics) && unit.topics.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                          {unit.topics.map((t: string, tIdx: number) => (
+                            <span key={tIdx} className="px-2.5 py-1 rounded-md text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                              {t}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </Card>
+        </div>
+      )}
+
+      {/* BOTTOM ACTION BAR */}
       <div
         className="p-6 rounded-[18px] border flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl"
         style={{

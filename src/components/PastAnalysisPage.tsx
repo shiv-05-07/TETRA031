@@ -45,6 +45,13 @@ export interface PastAnalysisRecord {
   outdatedSkills: string[];
   backendAnalysis?: any;
   gapReport?: any;
+  documentId?: string;
+  generatedPdfUrl?: string;
+  recommendationsData?: any;
+  knowledgeGraphData?: any;
+  generatedCurriculumData?: any;
+  vectorSearchResultsData?: any;
+  chatSuggestionsData?: any;
 }
 
 interface PastAnalysisPageProps {
