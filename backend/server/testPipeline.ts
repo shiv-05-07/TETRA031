@@ -35,7 +35,7 @@ async function runPipeline() {
 
     results.push({
       topic,
-      matches,
+      matches: matches.map(m => m.document),
     });
   }
 

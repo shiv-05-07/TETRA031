@@ -1,8 +1,9 @@
 import { ChromaClient } from "chromadb";
-import { generateEmbedding } from "./embeddingService";
-await initVectorDB();
+import { generateEmbedding } from "./embeddingService.js";
+
 const client = new ChromaClient({
-  path: "http://localhost:8000", // Chroma server
+  host: "localhost",
+  port: 8000
 });
 
 const COLLECTION_NAME = "industry_skills";
@@ -53,7 +54,7 @@ export async function querySimilar(text: string, topK: number = 5) {
       nResults: topK,
     });
 
-    return results.documents[0]; // array of matches
+    return results.documents[0] as string[]; // array of matches
   } catch (error) {
     console.error("❌ Query error:", error);
     return [];
