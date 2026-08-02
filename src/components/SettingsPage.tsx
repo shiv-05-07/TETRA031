@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   User,
@@ -23,7 +23,11 @@ import {
   Trash2,
   ExternalLink,
   Sun,
-  Moon
+  Moon,
+  ToggleLeft,
+  ToggleRight,
+  RefreshCw,
+  X
 } from 'lucide-react';
 import { ThemeMode } from '../types';
 import { getThemeTokens } from '../theme/tokens';
@@ -57,7 +61,9 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
 
   const [activeSection, setActiveSection] = useState<SettingsSection>('profile');
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showLogsModal, setShowLogsModal] = useState(false);
 
   // Editable Profile Form State
   const [profileName, setProfileName] = useState('Dr. Ananya Rao');
@@ -65,8 +71,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   const [profileEmail, setProfileEmail] = useState('ananya.rao@greenfield.edu.in');
   const [profilePhone, setProfilePhone] = useState('+91 98765 43210');
 
-  // Interactive Preference Dropdowns State
-  const [selectedTheme, setSelectedTheme] = useState<'dark' | 'light' | 'system'>('dark');
+  // Preferences State
   const [language, setLanguage] = useState('English');
   const [dateFormat, setDateFormat] = useState('DD/MM/YYYY');
   const [timeZone, setTimeZone] = useState('(GMT+05:30) Asia/Kolkata');
@@ -84,6 +89,31 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     autoReport: true,
   });
 
+  // Integrations State
+  const [integrations, setIntegrations] = useState([
+    { id: 'neo4j', name: 'Neo4j Database', desc: 'Graph Database for Skill Ontology', connected: true },
+    { id: 'openai', name: 'OpenAI API', desc: 'GPT-4o & Embedding Models', connected: true },
+    { id: 'chroma', name: 'ChromaDB Vector Store', desc: 'Vector Search for Syllabi', connected: true },
+    { id: 'gdrive', name: 'Google Drive', desc: 'Cloud Syllabus Import', connected: false },
+    { id: 'onedrive', name: 'Microsoft OneDrive', desc: 'Enterprise Document Sync', connected: false },
+  ]);
+
+  // Notification Toggles State
+  const [notificationToggles, setNotificationToggles] = useState({
+    email: true,
+    analysisCompleted: true,
+    weeklyReports: false,
+    systemUpdates: true,
+    securityAlerts: true,
+  });
+
+  // Data & Privacy Toggles State
+  const [privacyToggles, setPrivacyToggles] = useState({
+    encryption: true,
+    anonymizeData: true,
+  });
+  const [retentionPeriod, setRetentionPeriod] = useState('12 Months');
+
   // Secondary Left Settings Menu Items
   const menuItems = [
     { id: 'profile', label: 'Profile & Account', icon: User },
@@ -96,6 +126,65 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     { id: 'security', label: 'Security', icon: Shield },
     { id: 'danger', label: 'Danger Zone', icon: AlertTriangle, isDanger: true },
   ];
+
+  // Scrollspy logic: Observe section elements on scroll
+  const isClickNavigatingRef = useRef(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (isClickNavigatingRef.current) return;
+
+      const sectionIds: SettingsSection[] = [
+        'profile',
+        'organization',
+        'preferences',
+        'ai_settings',
+        'integrations',
+        'notifications',
+        'privacy',
+        'security',
+        'danger',
+      ];
+
+      const scrollPosition = window.scrollY + 200;
+
+      for (let i = sectionIds.length - 1; i >= 0; i--) {
+        const id = sectionIds[i];
+        const el = document.getElementById(id);
+        if (el) {
+          const top = el.offsetTop;
+          if (scrollPosition >= top) {
+            setActiveSection(id);
+            break;
+          }
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const handleNavClick = (id: SettingsSection) => {
+    setActiveSection(id);
+    isClickNavigatingRef.current = true;
+
+    const el = document.getElementById(id);
+    if (el) {
+      const offsetTop = el.getBoundingClientRect().top + window.pageYOffset - 100;
+      window.scrollTo({ top: offsetTop, behavior: 'smooth' });
+    }
+
+    setTimeout(() => {
+      isClickNavigatingRef.current = false;
+    }, 800);
+  };
+
+  const toggleIntegration = (id: string) => {
+    setIntegrations((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, connected: !item.connected } : item))
+    );
+  };
 
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto pb-16">
@@ -145,9 +234,9 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
 
       {/* MAIN TWO-COLUMN SETTINGS LAYOUT */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* LEFT SECONDARY SETTINGS MENU (3 COLS) */}
+        {/* LEFT SECONDARY SETTINGS MENU (3 COLS - STICKY) */}
         <div className="lg:col-span-3">
-          <Card theme={theme} hoverEffect={false} className="p-3 border sticky top-6">
+          <Card theme={theme} hoverEffect={false} className="p-3 border sticky top-6 z-10">
             <div className="space-y-1">
               {menuItems.map((item) => {
                 const Icon = item.icon;
@@ -157,11 +246,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                 return (
                   <button
                     key={item.id}
-                    onClick={() => {
-                      setActiveSection(item.id as SettingsSection);
-                      const el = document.getElementById(item.id);
-                      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }}
+                    onClick={() => handleNavClick(item.id as SettingsSection)}
                     className={`w-full flex items-center justify-between px-3.5 py-3 rounded-[12px] text-xs font-semibold transition-all cursor-pointer relative ${
                       isDanger ? 'hover:bg-red-500/10' : ''
                     }`}
@@ -235,7 +320,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
 
               {/* Profile Details Grid */}
               <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
-                {/* Avatar & Title */}
                 <div className="md:col-span-5 flex items-center gap-4">
                   <div
                     className="w-16 h-16 rounded-full font-bold text-xl flex items-center justify-center border-2 text-black shadow-md flex-shrink-0"
@@ -263,7 +347,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                   </div>
                 </div>
 
-                {/* Metadata Column */}
                 <div className="md:col-span-7 grid grid-cols-2 gap-4 text-xs">
                   <div className="space-y-1">
                     <span className="text-gray-400 block">Role</span>
@@ -316,7 +399,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                 </button>
               </div>
 
-              {/* Organization Data */}
               <div className="flex items-center gap-4">
                 <div
                   className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-md"
@@ -343,7 +425,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
             </Card>
           </div>
 
-          {/* SECTION 3: THREE COLUMNS (PREFERENCES, AI SETTINGS, DATA & PRIVACY) */}
+          {/* SECTION 3: PREFERENCES, AI SETTINGS, PRIVACY */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Preferences Card */}
             <Card id="preferences" theme={theme} hoverEffect={false} className="p-5 border flex flex-col justify-between space-y-4">
@@ -357,7 +439,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                   </p>
                 </div>
 
-                {/* Settings Controls */}
                 <div className="space-y-3.5 text-xs">
                   <div className="flex items-center justify-between">
                     <span style={{ color: tokens.textSecondary }}>Theme</span>
@@ -429,7 +510,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                   </p>
                 </div>
 
-                {/* AI Dropdowns */}
                 <div className="space-y-3.5 text-xs">
                   <div className="flex items-center justify-between">
                     <span style={{ color: tokens.textSecondary }}>LLM Provider</span>
@@ -487,7 +567,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                   </p>
                 </div>
 
-                {/* Privacy Items */}
                 <div className="space-y-3.5 text-xs">
                   <div className="flex items-center justify-between">
                     <span style={{ color: tokens.textSecondary }}>Data Encryption</span>
@@ -498,23 +577,40 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
 
                   <div className="flex items-center justify-between">
                     <span style={{ color: tokens.textSecondary }}>Data Retention</span>
-                    <span className="font-semibold cursor-pointer hover:underline" style={{ color: tokens.textPrimary }}>
-                      12 Months &gt;
-                    </span>
+                    <select
+                      value={retentionPeriod}
+                      onChange={(e) => setRetentionPeriod(e.target.value)}
+                      className="px-2 py-1 rounded-lg border outline-none font-semibold text-xs cursor-pointer"
+                      style={{ backgroundColor: tokens.inputBg, borderColor: tokens.border, color: tokens.textPrimary }}
+                    >
+                      <option value="6 Months">6 Months</option>
+                      <option value="12 Months">12 Months</option>
+                      <option value="24 Months">24 Months</option>
+                    </select>
                   </div>
 
                   <div className="flex items-center justify-between">
                     <span style={{ color: tokens.textSecondary }}>Anonymize Data</span>
-                    <span className="px-2 py-0.5 rounded-full font-bold text-[10px] bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-                      Enabled
-                    </span>
+                    <button
+                      onClick={() => setPrivacyToggles((p) => ({ ...p, anonymizeData: !p.anonymizeData }))}
+                      className="px-2 py-0.5 rounded-full font-bold text-[10px] cursor-pointer"
+                      style={{
+                        backgroundColor: privacyToggles.anonymizeData ? 'rgba(91, 225, 106, 0.15)' : 'rgba(255, 255, 255, 0.1)',
+                        color: privacyToggles.anonymizeData ? '#5BE16A' : tokens.textMuted,
+                      }}
+                    >
+                      {privacyToggles.anonymizeData ? 'Enabled' : 'Disabled'}
+                    </button>
                   </div>
 
                   <div className="flex items-center justify-between">
                     <span style={{ color: tokens.textSecondary }}>Audit Logs</span>
-                    <span className="font-semibold cursor-pointer text-[#5BE16A] hover:underline">
+                    <button
+                      onClick={() => setShowLogsModal(true)}
+                      className="font-semibold cursor-pointer text-[#5BE16A] hover:underline"
+                    >
                       View Logs &gt;
-                    </span>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -526,7 +622,114 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
             </Card>
           </div>
 
-          {/* SECTION 4: SECURITY CARD */}
+          {/* SECTION 4: INTEGRATIONS CARD */}
+          <div id="integrations" className="space-y-4">
+            <Card theme={theme} hoverEffect={false} className="p-6 border space-y-6">
+              <div className="border-b pb-4" style={{ borderColor: tokens.border }}>
+                <h3 className="text-lg font-bold tracking-tight" style={{ color: tokens.textPrimary }}>
+                  Integrations
+                </h3>
+                <p className="text-xs mt-0.5" style={{ color: tokens.textSecondary }}>
+                  Connected external services and educational databases.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {integrations.map((item) => (
+                  <div
+                    key={item.id}
+                    className="p-4 rounded-[14px] border flex items-center justify-between gap-3"
+                    style={{
+                      backgroundColor: tokens.inputBg,
+                      borderColor: tokens.border,
+                    }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center font-bold text-xs">
+                        <Database className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold" style={{ color: tokens.textPrimary }}>
+                          {item.name}
+                        </h4>
+                        <p className="text-[11px]" style={{ color: tokens.textMuted }}>
+                          {item.desc}
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => toggleIntegration(item.id)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors cursor-pointer ${
+                        item.connected
+                          ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+                          : 'bg-white/5 text-gray-400 border-gray-600/30 hover:bg-white/10'
+                      }`}
+                    >
+                      {item.connected ? 'Connected' : 'Connect'}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
+
+          {/* SECTION 5: NOTIFICATIONS CARD */}
+          <div id="notifications" className="space-y-4">
+            <Card theme={theme} hoverEffect={false} className="p-6 border space-y-6">
+              <div className="border-b pb-4" style={{ borderColor: tokens.border }}>
+                <h3 className="text-lg font-bold tracking-tight" style={{ color: tokens.textPrimary }}>
+                  Notifications
+                </h3>
+                <p className="text-xs mt-0.5" style={{ color: tokens.textSecondary }}>
+                  Manage email and in-app notification preferences.
+                </p>
+              </div>
+
+              <div className="space-y-4 text-xs">
+                {[
+                  { key: 'email', label: 'Email Notifications', desc: 'Receive analysis reports via email' },
+                  { key: 'analysisCompleted', label: 'Analysis Completed Alerts', desc: 'Instant notification when curriculum audit finishes' },
+                  { key: 'weeklyReports', label: 'Weekly Digest', desc: 'Weekly summary of curriculum gap updates' },
+                  { key: 'systemUpdates', label: 'System Updates & Features', desc: 'News about platform improvements' },
+                  { key: 'securityAlerts', label: 'Security & Access Alerts', desc: 'Notifications for login activities' },
+                ].map((item) => {
+                  const isChecked = (notificationToggles as any)[item.key];
+                  return (
+                    <div key={item.key} className="flex items-center justify-between py-1">
+                      <div>
+                        <span className="font-bold block" style={{ color: tokens.textPrimary }}>
+                          {item.label}
+                        </span>
+                        <span className="text-[11px]" style={{ color: tokens.textMuted }}>
+                          {item.desc}
+                        </span>
+                      </div>
+
+                      <button
+                        onClick={() =>
+                          setNotificationToggles((prev) => ({
+                            ...prev,
+                            [item.key]: !(prev as any)[item.key],
+                          }))
+                        }
+                        className={`w-11 h-6 rounded-full p-1 transition-colors cursor-pointer flex items-center ${
+                          isChecked ? 'bg-[#5BE16A] justify-end' : 'bg-gray-700 justify-start'
+                        }`}
+                      >
+                        <motion.div
+                          layout
+                          className="w-4 h-4 rounded-full bg-black shadow-md"
+                        />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </Card>
+          </div>
+
+          {/* SECTION 6: SECURITY CARD */}
           <div id="security" className="space-y-4">
             <Card theme={theme} hoverEffect={false} className="p-6 border space-y-6">
               <div className="border-b pb-4" style={{ borderColor: tokens.border }}>
@@ -538,9 +741,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                 </p>
               </div>
 
-              {/* 3 Equal Inner Security Cards */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Card 1: Password */}
                 <div
                   className="p-4 rounded-[14px] border flex flex-col justify-between space-y-3"
                   style={{
@@ -557,12 +758,15 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                       <span className="text-[11px] font-mono text-gray-400">Protected</span>
                     </div>
                   </div>
-                  <button className="w-full py-2 rounded-lg text-xs font-bold border cursor-pointer hover:bg-black/10 dark:hover:bg-white/10" style={{ borderColor: tokens.border, color: tokens.textPrimary }}>
+                  <button
+                    onClick={() => setShowPasswordModal(true)}
+                    className="w-full py-2 rounded-lg text-xs font-bold border cursor-pointer hover:bg-black/10 dark:hover:bg-white/10"
+                    style={{ borderColor: tokens.border, color: tokens.textPrimary }}
+                  >
                     Change
                   </button>
                 </div>
 
-                {/* Card 2: 2FA */}
                 <div
                   className="p-4 rounded-[14px] border flex flex-col justify-between space-y-3"
                   style={{
@@ -579,12 +783,14 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                       <span className="text-[11px] font-bold text-emerald-400">Enabled</span>
                     </div>
                   </div>
-                  <button className="w-full py-2 rounded-lg text-xs font-bold border cursor-pointer hover:bg-black/10 dark:hover:bg-white/10" style={{ borderColor: tokens.border, color: tokens.textPrimary }}>
+                  <button
+                    className="w-full py-2 rounded-lg text-xs font-bold border cursor-pointer hover:bg-black/10 dark:hover:bg-white/10"
+                    style={{ borderColor: tokens.border, color: tokens.textPrimary }}
+                  >
                     Manage
                   </button>
                 </div>
 
-                {/* Card 3: Active Sessions */}
                 <div
                   className="p-4 rounded-[14px] border flex flex-col justify-between space-y-3"
                   style={{
@@ -601,7 +807,10 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                       <span className="text-[11px] font-bold text-blue-400">2 Active</span>
                     </div>
                   </div>
-                  <button className="w-full py-2 rounded-lg text-xs font-bold border cursor-pointer hover:bg-black/10 dark:hover:bg-white/10" style={{ borderColor: tokens.border, color: tokens.textPrimary }}>
+                  <button
+                    className="w-full py-2 rounded-lg text-xs font-bold border cursor-pointer hover:bg-black/10 dark:hover:bg-white/10"
+                    style={{ borderColor: tokens.border, color: tokens.textPrimary }}
+                  >
                     View
                   </button>
                 </div>
@@ -609,7 +818,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
             </Card>
           </div>
 
-          {/* SECTION 5: DANGER ZONE CARD */}
+          {/* SECTION 7: DANGER ZONE CARD */}
           <div id="danger" className="space-y-4">
             <Card
               theme={theme}
@@ -720,6 +929,120 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                   style={{ backgroundColor: tokens.primaryAccent }}
                 >
                   Save Changes
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* CHANGE PASSWORD MODAL */}
+      <AnimatePresence>
+        {showPasswordModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowPasswordModal(false)}
+              className="fixed inset-0 bg-black/75 backdrop-blur-md"
+            />
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="relative w-full max-w-md rounded-[18px] border p-6 shadow-2xl z-10 space-y-4"
+              style={{
+                backgroundColor: tokens.cardBg,
+                borderColor: tokens.border,
+                color: tokens.textPrimary,
+              }}
+            >
+              <h3 className="text-lg font-bold">Change Password</h3>
+
+              <div className="space-y-3 text-xs">
+                <div>
+                  <label className="block mb-1 font-semibold text-gray-400">Current Password</label>
+                  <input
+                    type="password"
+                    placeholder="••••••••"
+                    className="w-full px-3 py-2 rounded-lg border outline-none"
+                    style={{ backgroundColor: tokens.inputBg, borderColor: tokens.border, color: tokens.textPrimary }}
+                  />
+                </div>
+
+                <div>
+                  <label className="block mb-1 font-semibold text-gray-400">New Password</label>
+                  <input
+                    type="password"
+                    placeholder="••••••••"
+                    className="w-full px-3 py-2 rounded-lg border outline-none"
+                    style={{ backgroundColor: tokens.inputBg, borderColor: tokens.border, color: tokens.textPrimary }}
+                  />
+                </div>
+              </div>
+
+              <div className="pt-3 flex gap-3">
+                <button
+                  onClick={() => setShowPasswordModal(false)}
+                  className="flex-1 py-2.5 rounded-xl border text-xs font-semibold cursor-pointer"
+                  style={{ borderColor: tokens.border, color: tokens.textSecondary }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => setShowPasswordModal(false)}
+                  className="flex-1 py-2.5 rounded-xl text-xs font-bold text-black cursor-pointer shadow-md"
+                  style={{ backgroundColor: tokens.primaryAccent }}
+                >
+                  Update Password
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* DELETE ACCOUNT CONFIRMATION MODAL */}
+      <AnimatePresence>
+        {showDeleteModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowDeleteModal(false)}
+              className="fixed inset-0 bg-black/80 backdrop-blur-md"
+            />
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="relative w-full max-w-md rounded-[18px] border p-6 shadow-2xl z-10 space-y-4 border-red-500/30 bg-red-950/20 text-white"
+            >
+              <div className="flex items-center gap-3 text-red-500">
+                <AlertTriangle className="w-6 h-6" />
+                <h3 className="text-lg font-bold">Delete Account</h3>
+              </div>
+
+              <p className="text-xs text-gray-300 leading-relaxed">
+                Are you sure you want to delete your Lumini account? This action is permanent and will remove all uploaded curricula, knowledge graph nodes, and AI recommendations.
+              </p>
+
+              <div className="pt-3 flex gap-3">
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  className="flex-1 py-2.5 rounded-xl border border-gray-700 text-xs font-semibold cursor-pointer hover:bg-white/10"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  className="flex-1 py-2.5 rounded-xl text-xs font-bold bg-red-600 text-white cursor-pointer shadow-md hover:bg-red-700"
+                >
+                  Confirm Delete
                 </button>
               </div>
             </motion.div>
