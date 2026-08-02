@@ -13,6 +13,8 @@ interface HeaderProps {
   subtitle?: string;
 }
 
+import { useAuth } from '../../hooks/useAuth';
+
 export const Header: React.FC<HeaderProps> = ({
   theme,
   onToggleTheme,
@@ -21,6 +23,7 @@ export const Header: React.FC<HeaderProps> = ({
   subtitle = "Here's an overview of your curriculum analyses.",
 }) => {
   const tokens = getThemeTokens(theme);
+  const { user, profile } = useAuth();
 
   return (
     <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-2">
@@ -29,7 +32,7 @@ export const Header: React.FC<HeaderProps> = ({
           className="text-2xl sm:text-3xl lg:text-[40px] font-bold tracking-tight leading-tight flex items-center gap-2"
           style={{ color: tokens.textPrimary }}
         >
-          Good evening, {greetingName} <span className="inline-block animate-bounce">👋</span>
+          Good evening, {profile?.full_name || user?.user_metadata?.full_name || greetingName} <span className="inline-block animate-bounce">👋</span>
         </h1>
         <p
           className="text-sm sm:text-base mt-1"
