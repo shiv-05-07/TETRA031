@@ -1,0 +1,30 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "@supabase/supabase-js": "^2.111.0",
+    "chromadb": "^3.5.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "multer": "^2.2.0",
+    "neo4j-driver": "^6.2.0",
+    "openai": "^7.3.0",
+    "pdf-parse": "^2.4.5"
+  },
+  "devDependencies": {
+    "@types/multer": "^2.2.0",
+    "@types/pdf-parse": "^1.1.5"
+  }
+}
