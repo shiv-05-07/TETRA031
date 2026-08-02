@@ -13,7 +13,8 @@ export async function uploadController(
             });
         }
 
-        const result = await uploadService(req.file);
+        const userId = (req as any).user?.id || (req as any).userId || null;
+        const result = await uploadService(req.file, userId);
 
         return res.json(result);
     } catch (err: any) {
@@ -24,4 +25,4 @@ export async function uploadController(
             message: err.message,
         });
     }
-}
+}
